@@ -8,11 +8,11 @@ describe('parseJSON', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseJSON(content)
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
     expect(flags[0].key).toBe('new_dashboard')
     expect(flags[0].state).toBe('enabled')
-    expect(flags[1].key).toBe('legacy_api')
-    expect(flags[1].state).toBe('deprecated')
+    expect(flags[1].key).toBe('experimental_search')
+    expect(flags[1].state).toBe('disabled')
   })
 
   it('should parse JSON array directly', () => {
@@ -50,7 +50,7 @@ describe('parseYAML', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseYAML(content)
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
     expect(flags[0].key).toBe('new_dashboard')
     expect(flags[0].state).toBe('enabled')
     expect(flags[0].tags).toContain('ui')
@@ -99,7 +99,7 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.json')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
     expect(flags[0].key).toBe('new_dashboard')
   })
 
@@ -107,7 +107,7 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.yaml')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
     expect(flags[0].key).toBe('new_dashboard')
   })
 
@@ -115,7 +115,7 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.yml')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
   })
 
   it('should try JSON first for unknown extensions', () => {
@@ -143,6 +143,6 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseFlags(content, 'config/FLAGS.JSON')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
   })
 })
