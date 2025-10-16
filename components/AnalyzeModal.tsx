@@ -1,6 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { Dialog } from 'primereact/dialog'
+import { InputText } from 'primereact/inputtext'
+import { Button } from 'primereact/button'
+import { Chips } from 'primereact/chips'
+import { Message } from 'primereact/message'
 import type { Flag } from '@/types/flags'
 
 interface AnalyzeModalProps {
@@ -20,7 +25,7 @@ interface AnalyzeModalProps {
 
 export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeModalProps) {
   const [workingDir, setWorkingDir] = useState('')
-  const [patterns, setPatterns] = useState('')
+  const [patterns, setPatterns] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   if (!flag) return null
@@ -32,99 +37,121 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
     const params = {
       flags: [flag.key],
       workingDir: workingDir || undefined,
-      patterns: patterns
-        ? patterns.split(',').map(p => p.trim()).filter(Boolean)
-        : undefined,
+      patterns: patterns.length > 0 ? patterns : undefined,
     }
 
     onSubmit(params)
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-2xl font-bold">Analyze Flag</h2>
-            <p className="text-gray-600 mt-1">
-              Repository: <span className="font-mono">{repoConfig.owner}/{repoConfig.repo}</span>
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={submitting}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded p-4">
-            <p className="text-sm text-blue-800">
-              <strong>Flag:</strong> <code className="font-mono">{flag.key}</code>
-            </p>
-            <p className="text-sm text-blue-800 mt-1">
-              <strong>State:</strong> {flag.state}
-            </p>
-            {flag.description && (
-              <p className="text-sm text-blue-800 mt-1">
-                <strong>Description:</strong> {flag.description}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Working Directory (optional)
-            </label>
-            <input
-              type="text"
-              value={workingDir}
-              onChange={(e) => setWorkingDir(e.target.value)}
-              placeholder="e.g., packages/web"
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Specify a subdirectory to search within
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              File Patterns (optional)
-            </label>
-            <input
-              type="text"
-              value={patterns}
-              onChange={(e) => setPatterns(e.target.value)}
-              placeholder="e.g., **/*.ts, **/*.tsx"
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Comma-separated glob patterns (leave empty to search all files)
-            </p>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? 'Starting Analysis...' : 'Start Analysis'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              className="px-6 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+  const header = (
+    <div className="flex align-items-center gap-3">
+      <i className="pi pi-search text-3xl"></i>
+      <div>
+        <h2 className="text-2xl font-bold m-0">Analyze Flag</h2>
+        <p className="text-sm text-gray-600 m-0 mt-1">
+          <i className="pi pi-github mr-1"></i>
+          {repoConfig.owner}/{repoConfig.repo}
+        </p>
       </div>
     </div>
+  )
+
+  return (
+    <Dialog
+      visible={!!flag}
+      onHide={onClose}
+      header={header}
+      style={{ width: '600px' }}
+      modal
+      draggable={false}
+      dismissableMask={!submitting}
+      closable={!submitting}
+      blockScroll
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Message
+          severity="info"
+          className="w-full"
+          content={
+            <div className="space-y-1">
+              <div>
+                <strong>Flag:</strong> <code className="font-mono bg-white px-2 py-1 rounded">{flag.key}</code>
+              </div>
+              <div>
+                <strong>Current State:</strong> <span className="capitalize">{flag.state}</span>
+              </div>
+              {flag.description && (
+                <div>
+                  <strong>Description:</strong> {flag.description}
+                </div>
+              )}
+            </div>
+          }
+        />
+
+        <div>
+          <label htmlFor="workingDir" className="block text-sm font-medium mb-2">
+            <i className="pi pi-folder mr-2"></i>
+            Working Directory (Optional)
+          </label>
+          <InputText
+            id="workingDir"
+            value={workingDir}
+            onChange={(e) => setWorkingDir(e.target.value)}
+            placeholder="e.g., packages/web"
+            className="w-full"
+          />
+          <small className="text-gray-500">
+            Specify a subdirectory to narrow the search scope
+          </small>
+        </div>
+
+        <div>
+          <label htmlFor="patterns" className="block text-sm font-medium mb-2">
+            <i className="pi pi-filter mr-2"></i>
+            File Patterns (Optional)
+          </label>
+          <Chips
+            id="patterns"
+            value={patterns}
+            onChange={(e) => setPatterns(e.value || [])}
+            placeholder="Add pattern (e.g., **/*.ts) and press Enter"
+            className="w-full"
+          />
+          <small className="text-gray-500">
+            Glob patterns to filter files. Press Enter after each pattern.
+          </small>
+        </div>
+
+        <Message
+          severity="warn"
+          className="w-full"
+          content={
+            <div>
+              <strong>Note:</strong> Analysis may take a few minutes depending on repository size.
+              You'll be redirected to the job page to view progress in real-time.
+            </div>
+          }
+        />
+
+        <div className="flex gap-3 pt-2">
+          <Button
+            type="submit"
+            label={submitting ? 'Starting Analysis...' : 'Start Analysis'}
+            icon={submitting ? 'pi pi-spin pi-spinner' : 'pi pi-play'}
+            loading={submitting}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            label="Cancel"
+            icon="pi pi-times"
+            outlined
+            onClick={onClose}
+            disabled={submitting}
+          />
+        </div>
+      </form>
+    </Dialog>
   )
 }

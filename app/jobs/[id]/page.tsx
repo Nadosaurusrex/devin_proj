@@ -1,12 +1,21 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
+import { Card } from 'primereact/card'
+import { Tag } from 'primereact/tag'
+import { Button } from 'primereact/button'
+import { ScrollPanel } from 'primereact/scrollpanel'
+import { Divider } from 'primereact/divider'
+import { ProgressBar } from 'primereact/progressbar'
+import { Badge } from 'primereact/badge'
+import { motion } from 'framer-motion'
 import type { LogEntry, JobStatus, SSEMessage } from '@/types/jobs'
 import type { AnalysisResult, RemovalResult } from '@/types/devin'
 
 export default function JobPage() {
   const params = useParams()
+  const router = useRouter()
   const jobId = params.id as string
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [status, setStatus] = useState<JobStatus>('pending')
@@ -64,33 +73,33 @@ export default function JobPage() {
     }
   }, [jobId])
 
-  const getStatusColor = (status: JobStatus) => {
+  const getStatusSeverity = (status: JobStatus) => {
     switch (status) {
-      case 'pending':
-        return 'bg-gray-100 text-gray-800'
-      case 'running':
-        return 'bg-blue-100 text-blue-800'
-      case 'completed':
-        return 'bg-green-100 text-green-800'
-      case 'failed':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'pending': return 'secondary'
+      case 'running': return 'info'
+      case 'completed': return 'success'
+      case 'failed': return 'danger'
+      default: return 'secondary'
     }
   }
 
-  const getLogColor = (level: LogEntry['level']) => {
+  const getStatusIcon = (status: JobStatus) => {
+    switch (status) {
+      case 'pending': return 'pi-clock'
+      case 'running': return 'pi-spin pi-spinner'
+      case 'completed': return 'pi-check-circle'
+      case 'failed': return 'pi-times-circle'
+      default: return 'pi-question-circle'
+    }
+  }
+
+  const getLogIcon = (level: LogEntry['level']) => {
     switch (level) {
-      case 'error':
-        return 'text-red-600'
-      case 'warn':
-        return 'text-yellow-600'
-      case 'info':
-        return 'text-gray-700'
-      case 'debug':
-        return 'text-gray-500'
-      default:
-        return 'text-gray-700'
+      case 'error': return { icon: 'pi-times-circle', color: 'text-red-600' }
+      case 'warn': return { icon: 'pi-exclamation-triangle', color: 'text-yellow-600' }
+      case 'info': return { icon: 'pi-info-circle', color: 'text-blue-600' }
+      case 'debug': return { icon: 'pi-cog', color: 'text-gray-500' }
+      default: return { icon: 'pi-circle', color: 'text-gray-600' }
     }
   }
 
@@ -104,197 +113,308 @@ export default function JobPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    alert('Copied to clipboard!')
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-start">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-4"
+    >
+      {/* Header */}
+      <div className="flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Job Details</h1>
-          <p className="text-gray-600 mt-1">
-            Job ID: <span className="font-mono text-sm">{jobId}</span>
+          <div className="flex align-items-center gap-2 mb-2">
+            <i className="pi pi-briefcase text-3xl text-blue-600"></i>
+            <h1 className="text-4xl font-bold m-0">Job Details</h1>
+          </div>
+          <p className="text-gray-600 flex align-items-center gap-2">
+            <i className="pi pi-hashtag"></i>
+            <code className="font-mono text-sm">{jobId}</code>
           </p>
         </div>
-        <span className={`px-3 py-1 text-sm rounded ${getStatusColor(status)}`}>
-          {status}
-        </span>
+        <div className="flex gap-2 align-items-center">
+          <Tag
+            value={status.toUpperCase()}
+            severity={getStatusSeverity(status)}
+            icon={`pi ${getStatusIcon(status)}`}
+            style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}
+          />
+          <Button
+            icon="pi pi-arrow-left"
+            label="Back to Flags"
+            outlined
+            onClick={() => router.push('/flags')}
+          />
+        </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded p-4">
-          <p className="text-red-800">
-            <strong>Error:</strong> {error}
-          </p>
-        </div>
+      {/* Progress Bar for Running Status */}
+      {status === 'running' && (
+        <Card>
+          <div className="text-center">
+            <i className="pi pi-spin pi-cog text-4xl text-blue-600 mb-3"></i>
+            <h3 className="text-xl font-semibold mb-2">Processing...</h3>
+            <ProgressBar mode="indeterminate" style={{ height: '8px' }} />
+          </div>
+        </Card>
       )}
 
-      <div className="border rounded p-4 bg-gray-50">
-        <h2 className="font-semibold mb-3">Job Logs</h2>
-        <div className="font-mono text-xs space-y-1 max-h-96 overflow-y-auto bg-white p-3 rounded border">
-          {logs.length === 0 ? (
-            <div className="text-gray-500">Waiting for logs...</div>
-          ) : (
-            logs.map((log, index) => (
-              <div key={index} className={getLogColor(log.level)}>
-                <span className="text-gray-400">
-                  [{new Date(log.timestamp).toLocaleTimeString()}]
-                </span>{' '}
-                <span className="font-semibold uppercase">[{log.level}]</span>{' '}
-                {log.message}
-              </div>
-            ))
-          )}
-          <div ref={logsEndRef} />
+      {/* Error Display */}
+      {error && (
+        <Card className="bg-red-50 border-red-200">
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-exclamation-circle text-3xl text-red-600"></i>
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 m-0 mb-2">Error Occurred</h3>
+              <p className="text-red-700 m-0">{error}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Logs Panel */}
+      <Card>
+        <div className="flex align-items-center justify-content-between mb-3">
+          <div className="flex align-items-center gap-2">
+            <i className="pi pi-list text-2xl text-blue-600"></i>
+            <h2 className="text-2xl font-bold m-0">Live Logs</h2>
+            <Badge value={logs.length} severity="info" />
+          </div>
         </div>
-      </div>
 
-      {result && (
-        <div className="border rounded p-4">
-          <h2 className="font-semibold mb-3">Result</h2>
-
-          {isAnalysisResult(result) && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                <h3 className="font-semibold mb-2">Summary</h3>
-                <div className="text-sm space-y-1">
-                  <p>Total Flags: {result.summary.total_flags}</p>
-                  <p>Total References: {result.summary.total_references}</p>
-                  <p>Estimated Effort: {result.summary.estimated_effort_hours} hours</p>
-                </div>
+        <ScrollPanel style={{ width: '100%', height: '400px' }} className="custom-scrollpanel">
+          <div className="font-mono text-sm space-y-1 p-3 bg-gray-900 text-white rounded-lg">
+            {logs.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <i className="pi pi-spin pi-spinner text-2xl mb-2"></i>
+                <p>Waiting for logs...</p>
               </div>
-
-              {result.flags.map((flag) => (
-                <div key={flag.key} className="border rounded p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg">
-                      <code>{flag.key}</code>
-                    </h3>
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${
-                        flag.risk_level === 'low'
-                          ? 'bg-green-100 text-green-800'
-                          : flag.risk_level === 'medium'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {flag.risk_level} risk
+            ) : (
+              logs.map((log, index) => {
+                const { icon, color } = getLogIcon(log.level)
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex align-items-start gap-2 py-1"
+                  >
+                    <i className={`pi ${icon} ${color}`}></i>
+                    <span className="text-gray-400 text-xs">
+                      {new Date(log.timestamp).toLocaleTimeString()}
                     </span>
-                  </div>
+                    <span className={`font-semibold uppercase text-xs ${color}`}>
+                      [{log.level}]
+                    </span>
+                    <span className="flex-1">{log.message}</span>
+                  </motion.div>
+                )
+              })
+            )}
+            <div ref={logsEndRef} />
+          </div>
+        </ScrollPanel>
+      </Card>
 
-                  <div className="text-sm space-y-2">
-                    <p>
-                      <strong>References:</strong> {flag.reference_count} in {flag.affected_files.length} files
-                    </p>
-                    <p>
-                      <strong>Confidence:</strong> {(flag.confidence * 100).toFixed(0)}%
-                    </p>
-                    <p>
-                      <strong>Recommendation:</strong> {flag.recommendation}
-                    </p>
+      {/* Results Display */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card>
+            <div className="flex align-items-center gap-2 mb-4">
+              <i className="pi pi-check-circle text-3xl text-green-600"></i>
+              <h2 className="text-2xl font-bold m-0">Results</h2>
+            </div>
 
-                    {flag.affected_files.length > 0 && (
+            {isAnalysisResult(result) && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Card className="bg-blue-50">
+                    <div className="text-center">
+                      <i className="pi pi-flag text-3xl text-blue-600 mb-2"></i>
+                      <div className="text-3xl font-bold text-blue-700">{result.summary.total_flags}</div>
+                      <div className="text-sm text-gray-600">Total Flags</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-purple-50">
+                    <div className="text-center">
+                      <i className="pi pi-code text-3xl text-purple-600 mb-2"></i>
+                      <div className="text-3xl font-bold text-purple-700">{result.summary.total_references}</div>
+                      <div className="text-sm text-gray-600">References</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-orange-50">
+                    <div className="text-center">
+                      <i className="pi pi-clock text-3xl text-orange-600 mb-2"></i>
+                      <div className="text-3xl font-bold text-orange-700">{result.summary.estimated_effort_hours}h</div>
+                      <div className="text-sm text-gray-600">Est. Effort</div>
+                    </div>
+                  </Card>
+                </div>
+
+                <Divider />
+
+                {result.flags.map((flag, index) => (
+                  <motion.div
+                    key={flag.key}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card className="mb-3">
+                      <div className="flex justify-content-between align-items-start mb-3">
+                        <div className="flex align-items-center gap-2">
+                          <i className="pi pi-flag text-2xl text-blue-600"></i>
+                          <code className="text-lg font-bold">{flag.key}</code>
+                        </div>
+                        <Tag
+                          value={`${flag.risk_level} risk`}
+                          severity={flag.risk_level === 'low' ? 'success' : flag.risk_level === 'medium' ? 'warning' : 'danger'}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <strong>References:</strong> {flag.reference_count} in {flag.affected_files.length} files
+                        </div>
+                        <div>
+                          <strong>Confidence:</strong> {(flag.confidence * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div className="mb-2">
+                        <strong>Recommendation:</strong> {flag.recommendation}
+                      </div>
+                      {flag.affected_files.length > 0 && (
+                        <div>
+                          <strong className="mb-2 block">Affected Files:</strong>
+                          <ul className="list-disc list-inside text-sm font-mono">
+                            {flag.affected_files.slice(0, 5).map((file, idx) => (
+                              <li key={idx} className="text-gray-700">{file}</li>
+                            ))}
+                            {flag.affected_files.length > 5 && (
+                              <li className="text-gray-500">+ {flag.affected_files.length - 5} more...</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {isRemovalResult(result) && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Card className="bg-green-50">
+                    <div className="text-center">
+                      <i className="pi pi-check text-3xl text-green-600 mb-2"></i>
+                      <div className="text-3xl font-bold text-green-700">{result.summary.flags_removed}</div>
+                      <div className="text-sm text-gray-600">Flags Removed</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-blue-50">
+                    <div className="text-center">
+                      <i className="pi pi-file text-3xl text-blue-600 mb-2"></i>
+                      <div className="text-3xl font-bold text-blue-700">{result.summary.files_modified}</div>
+                      <div className="text-sm text-gray-600">Files Modified</div>
+                    </div>
+                  </Card>
+                  <Card className={result.summary.tests_passed ? 'bg-green-50' : 'bg-red-50'}>
+                    <div className="text-center">
+                      <i className={`pi ${result.summary.tests_passed ? 'pi-check-circle' : 'pi-times-circle'} text-3xl ${result.summary.tests_passed ? 'text-green-600' : 'text-red-600'} mb-2`}></i>
+                      <div className="text-3xl font-bold">{result.summary.tests_passed ? '✓' : '✗'}</div>
+                      <div className="text-sm text-gray-600">Tests</div>
+                    </div>
+                  </Card>
+                  <Card className={result.summary.build_passed ? 'bg-green-50' : 'bg-red-50'}>
+                    <div className="text-center">
+                      <i className={`pi ${result.summary.build_passed ? 'pi-check-circle' : 'pi-times-circle'} text-3xl ${result.summary.build_passed ? 'text-green-600' : 'text-red-600'} mb-2`}></i>
+                      <div className="text-3xl font-bold">{result.summary.build_passed ? '✓' : '✗'}</div>
+                      <div className="text-sm text-gray-600">Build</div>
+                    </div>
+                  </Card>
+                </div>
+
+                {result.pr_url && (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <div className="flex align-items-center gap-3 mb-3">
+                      <i className="pi pi-github text-3xl text-blue-600"></i>
                       <div>
-                        <strong>Affected Files:</strong>
-                        <ul className="list-disc list-inside mt-1 text-xs font-mono">
-                          {flag.affected_files.map((file, idx) => (
-                            <li key={idx}>{file}</li>
-                          ))}
-                        </ul>
+                        <h3 className="text-xl font-semibold m-0 mb-1">Pull Request Created</h3>
+                        {result.branch && <p className="text-sm text-gray-600 m-0">Branch: <code>{result.branch}</code></p>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        label="View PR"
+                        icon="pi pi-external-link"
+                        onClick={() => window.open(result.pr_url, '_blank')}
+                      />
+                      <Button
+                        label="Copy Link"
+                        icon="pi pi-copy"
+                        outlined
+                        onClick={() => copyToClipboard(result.pr_url!)}
+                      />
+                    </div>
+                  </Card>
+                )}
+
+                {result.diff && (
+                  <Card>
+                    <h3 className="text-lg font-semibold mb-2 flex align-items-center gap-2">
+                      <i className="pi pi-code"></i>
+                      Diff (PR Creation Failed)
+                    </h3>
+                    <pre className="text-xs bg-gray-900 text-white p-3 rounded overflow-x-auto border max-h-96 overflow-y-auto">
+                      {result.diff}
+                    </pre>
+                    {result.commit_message && (
+                      <div className="mt-3">
+                        <strong className="text-sm">Proposed Commit Message:</strong>
+                        <pre className="text-xs bg-gray-50 p-3 rounded overflow-x-auto border mt-1">
+                          {result.commit_message}
+                        </pre>
                       </div>
                     )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                  </Card>
+                )}
 
-          {isRemovalResult(result) && (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded p-4">
-                <h3 className="font-semibold mb-2">Summary</h3>
-                <div className="text-sm space-y-1">
-                  <p>Flags Removed: {result.summary.flags_removed}</p>
-                  <p>Files Modified: {result.summary.files_modified}</p>
-                  <p>Tests Passed: {result.summary.tests_passed ? '✓' : '✗'}</p>
-                  <p>Build Passed: {result.summary.build_passed ? '✓' : '✗'}</p>
-                </div>
+                {result.errors && result.errors.length > 0 && (
+                  <Card className="bg-yellow-50 border-yellow-200">
+                    <h3 className="text-lg font-semibold mb-2 flex align-items-center gap-2">
+                      <i className="pi pi-exclamation-triangle text-yellow-600"></i>
+                      Warnings
+                    </h3>
+                    <ul className="text-sm space-y-1">
+                      {result.errors.map((err, idx) => (
+                        <li key={idx} className="flex align-items-start gap-2">
+                          <i className="pi pi-circle-fill text-xs text-yellow-600 mt-1"></i>
+                          <span>{err}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
               </div>
-
-              {result.pr_url && (
-                <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                  <h3 className="font-semibold mb-2">Pull Request</h3>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={result.pr_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-mono text-sm"
-                    >
-                      {result.pr_url}
-                    </a>
-                    <button
-                      onClick={() => copyToClipboard(result.pr_url!)}
-                      className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  {result.branch && (
-                    <p className="text-sm mt-2">
-                      Branch: <code className="font-mono">{result.branch}</code>
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {result.diff && (
-                <div className="border rounded p-4">
-                  <h3 className="font-semibold mb-2">Diff (PR creation failed)</h3>
-                  <pre className="text-xs bg-gray-50 p-3 rounded overflow-x-auto border">
-                    {result.diff}
-                  </pre>
-                  {result.commit_message && (
-                    <div className="mt-3">
-                      <strong className="text-sm">Proposed Commit Message:</strong>
-                      <pre className="text-xs bg-gray-50 p-3 rounded overflow-x-auto border mt-1">
-                        {result.commit_message}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {result.errors && result.errors.length > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                  <h3 className="font-semibold mb-2">Warnings</h3>
-                  <ul className="text-sm space-y-1">
-                    {result.errors.map((err, idx) => (
-                      <li key={idx}>{err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </Card>
+        </motion.div>
       )}
 
       {!result && isComplete && (
-        <div className="border rounded p-4">
-          <h2 className="font-semibold mb-2">Result</h2>
-          <p className="text-gray-500">
-            Job completed but no result was returned.
-          </p>
-        </div>
+        <Card className="text-center py-6">
+          <i className="pi pi-info-circle text-5xl text-gray-400 mb-3"></i>
+          <h3 className="text-xl font-semibold text-gray-600">Job Completed</h3>
+          <p className="text-gray-500">No result was returned from the job.</p>
+        </Card>
       )}
-
-      <div className="text-center">
-        <a href="/flags" className="text-blue-500 hover:underline text-sm">
-          ← Back to Flags
-        </a>
-      </div>
-    </div>
+    </motion.div>
   )
 }

@@ -1,7 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Card } from 'primereact/card'
+import { Button } from 'primereact/button'
+import { Message } from 'primereact/message'
+import { Toast } from 'primereact/toast'
+import { motion } from 'framer-motion'
 import { FlagsTable } from '@/components/FlagsTable'
 import { AnalyzeModal } from '@/components/AnalyzeModal'
 import { RemoveModal } from '@/components/RemoveModal'
@@ -16,6 +21,7 @@ interface RepoConfig {
 
 export default function FlagsPage() {
   const router = useRouter()
+  const toast = useRef<Toast>(null)
   const [config, setConfig] = useState<RepoConfig | null>(null)
   const [flags, setFlags] = useState<Flag[]>([])
   const [loading, setLoading] = useState(false)
@@ -42,7 +48,7 @@ export default function FlagsPage() {
         owner: repoConfig.owner,
         repo: repoConfig.repo,
         branch: repoConfig.branch,
-        path: repoConfig.registryPath,
+        registryPath: repoConfig.registryPath,
       })
 
       const response = await fetch(`/api/flags?${params}`)
@@ -55,8 +61,23 @@ export default function FlagsPage() {
 
       const flagsData = data as FlagsResponse
       setFlags(flagsData.flags)
+
+      if (flagsData.flags.length > 0) {
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Loaded ${flagsData.flags.length} feature flags`,
+          life: 3000
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load flags')
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: err instanceof Error ? err.message : 'Failed to load flags',
+        life: 5000
+      })
     } finally {
       setLoading(false)
     }
@@ -98,10 +119,23 @@ export default function FlagsPage() {
         throw new Error(errorData.message || 'Failed to start analysis')
       }
 
-      // Navigate to job page
-      router.push(`/jobs/${data.jobId}`)
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Analysis Started',
+        detail: 'Redirecting to job page...',
+        life: 2000
+      })
+
+      setTimeout(() => {
+        router.push(`/jobs/${data.jobId}`)
+      }, 500)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to start analysis')
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: err instanceof Error ? err.message : 'Failed to start analysis',
+        life: 5000
+      })
       setShowAnalyzeModal(false)
     }
   }
@@ -135,55 +169,109 @@ export default function FlagsPage() {
         throw new Error(errorData.message || 'Failed to start removal')
       }
 
-      // Navigate to job page
-      router.push(`/jobs/${data.jobId}`)
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Removal Started',
+        detail: 'Redirecting to job page...',
+        life: 2000
+      })
+
+      setTimeout(() => {
+        router.push(`/jobs/${data.jobId}`)
+      }, 500)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to start removal')
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: err instanceof Error ? err.message : 'Failed to start removal',
+        life: 5000
+      })
       setShowRemoveModal(false)
     }
   }
 
   if (!config) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold">Feature Flags</h1>
-        <p className="text-gray-600">
-          No repository connected. <a href="/connect" className="text-blue-500 hover:underline">Connect one now</a>.
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-12"
+      >
+        <Card>
+          <i className="pi pi-inbox text-6xl text-gray-400 mb-4"></i>
+          <h1 className="text-3xl font-bold mb-2">No Repository Connected</h1>
+          <p className="text-gray-600 mb-6">
+            Connect to a GitHub repository to view and manage feature flags
+          </p>
+          <Button
+            label="Connect Repository"
+            icon="pi pi-link"
+            onClick={() => router.push('/connect')}
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}
+          />
+        </Card>
+      </motion.div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-start">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Toast ref={toast} />
+
+      <div className="flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
-          <h1 className="text-3xl font-bold">Feature Flags</h1>
-          <p className="text-gray-600 mt-2">
-            Repository: <span className="font-mono">{config.owner}/{config.repo}</span>
-            {' '} ({config.branch})
+          <div className="flex align-items-center gap-2 mb-2">
+            <i className="pi pi-flag text-3xl text-blue-600"></i>
+            <h1 className="text-4xl font-bold m-0">Feature Flags</h1>
+          </div>
+          <p className="text-gray-600 flex align-items-center gap-2">
+            <i className="pi pi-github"></i>
+            <span className="font-mono font-semibold">{config.owner}/{config.repo}</span>
+            <span className="text-gray-400">|</span>
+            <i className="pi pi-code-branch"></i>
+            <span>{config.branch}</span>
           </p>
         </div>
-        <a
-          href="/connect"
-          className="text-sm text-blue-500 hover:underline"
-        >
-          Change Repository
-        </a>
+        <div className="flex gap-2">
+          <Button
+            label="Refresh"
+            icon="pi pi-refresh"
+            outlined
+            onClick={() => loadFlags(config)}
+            loading={loading}
+          />
+          <Button
+            label="Change Repo"
+            icon="pi pi-pencil"
+            outlined
+            onClick={() => router.push('/connect')}
+          />
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded p-4">
-          <p className="text-red-800">
-            <strong>Error:</strong> {error}
-          </p>
-          <button
-            onClick={() => loadFlags(config)}
-            className="mt-2 text-sm text-red-600 hover:underline"
-          >
-            Try again
-          </button>
-        </div>
+        <Message
+          severity="error"
+          className="w-full mb-4"
+          content={
+            <div className="flex align-items-center justify-content-between w-full">
+              <div>
+                <strong>Error:</strong> {error}
+              </div>
+              <Button
+                label="Retry"
+                icon="pi pi-refresh"
+                text
+                size="small"
+                onClick={() => loadFlags(config)}
+              />
+            </div>
+          }
+        />
       )}
 
       <FlagsTable
@@ -210,6 +298,6 @@ export default function FlagsPage() {
           onSubmit={handleRemoveSubmit}
         />
       )}
-    </div>
+    </motion.div>
   )
 }
