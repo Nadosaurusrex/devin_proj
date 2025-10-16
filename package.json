@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "just dev",
-    "build": "just build",
-    "start": "just start",
+    "build": "next build",
+    "start": "next start",
     "test": "just test",
     "typecheck": "just typecheck",
     "lint": "just lint",
