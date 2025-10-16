@@ -215,12 +215,6 @@ export async function createAnalyzeSession(
     throw new DevinApiError('Devin API key not configured', 500)
   }
 
-  // Debug logging (without exposing the actual key)
-  console.log('[Devin API] API key present:', !!DEVIN_API_KEY)
-  console.log('[Devin API] API key length:', DEVIN_API_KEY?.length)
-  console.log('[Devin API] API key prefix:', DEVIN_API_KEY?.substring(0, 10) + '...')
-  console.log('[Devin API] API endpoint:', `${DEVIN_API_BASE}/sessions`)
-
   const instruction = buildAnalyzeInstruction(params)
 
   // Real Devin API uses "prompt" not "instruction"
@@ -240,12 +234,8 @@ export async function createAnalyzeSession(
       body: JSON.stringify(request),
     })
 
-    console.log('[Devin API] Response status:', response.status)
-    console.log('[Devin API] Response statusText:', response.statusText)
-
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
-      console.log('[Devin API] Error response:', JSON.stringify(error))
 
       // Handle rate limiting with helpful message
       if (response.status === 429) {
@@ -737,12 +727,6 @@ export async function createRemoveSession(
     throw new DevinApiError('Devin API key not configured', 500)
   }
 
-  // Debug logging (without exposing the actual key)
-  console.log('[Devin API] Removal session - API key present:', !!DEVIN_API_KEY)
-  console.log('[Devin API] Removal session - API key length:', DEVIN_API_KEY?.length)
-  console.log('[Devin API] Removal session - API key prefix:', DEVIN_API_KEY?.substring(0, 10) + '...')
-  console.log('[Devin API] Removal session - API endpoint:', `${DEVIN_API_BASE}/sessions`)
-
   const instruction = buildRemovalInstruction(params)
 
   // Get GitHub token from environment
@@ -771,12 +755,8 @@ export async function createRemoveSession(
       body: JSON.stringify(request),
     })
 
-    console.log('[Devin API] Removal session - Response status:', response.status)
-    console.log('[Devin API] Removal session - Response statusText:', response.statusText)
-
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
-      console.log('[Devin API] Removal session - Error response:', JSON.stringify(error))
       throw new DevinApiError(
         `Failed to create Devin removal session: ${response.statusText}`,
         response.status,
