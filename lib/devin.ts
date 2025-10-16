@@ -236,6 +236,17 @@ export async function createAnalyzeSession(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
+
+      // Handle rate limiting with helpful message
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After') || '60'
+        throw new DevinApiError(
+          `Devin API rate limit exceeded. Please wait ${retryAfter} seconds before trying again. Too many sessions created recently.`,
+          response.status,
+          error
+        )
+      }
+
       throw new DevinApiError(
         `Failed to create Devin session: ${response.statusText}`,
         response.status,
@@ -283,11 +294,18 @@ export async function getSessionStatus(
   }
 
   try {
+    // Create abort controller for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
     const response = await fetch(`${DEVIN_API_BASE}/sessions/${sessionId}`, {
       headers: {
         Authorization: `Bearer ${DEVIN_API_KEY}`,
       },
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new DevinApiError(
@@ -366,6 +384,14 @@ export async function getSessionStatus(
   } catch (error) {
     if (error instanceof DevinApiError) {
       throw error
+    }
+    // Handle timeout specifically
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new DevinApiError(
+        'Request to Devin API timed out after 30 seconds',
+        408,
+        error
+      )
     }
     throw new DevinApiError(
       `Failed to get session status: ${error instanceof Error ? error.message : 'Unknown error'}`,

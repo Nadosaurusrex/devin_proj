@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getJob } from '@/lib/jobs'
+import { getJob, setJobResult, updateJobStatus } from '@/lib/jobs'
 import { getSessionStatus } from '@/lib/devin'
 import type { SSEMessage } from '@/types/jobs'
 
@@ -99,6 +99,10 @@ export async function GET(
 
               // Check if completed
               if (sessionStatus.status === 'completed' && sessionStatus.result) {
+                // Save result to job storage
+                setJobResult(jobId, sessionStatus.result)
+                updateJobStatus(jobId, 'completed')
+
                 sendMessage({
                   type: 'result',
                   data: sessionStatus.result,
