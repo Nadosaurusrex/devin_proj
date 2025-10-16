@@ -95,11 +95,11 @@ export default function JobPage() {
 
   const getLogIcon = (level: LogEntry['level']) => {
     switch (level) {
-      case 'error': return { icon: 'pi-times-circle', color: 'text-red-600' }
-      case 'warn': return { icon: 'pi-exclamation-triangle', color: 'text-yellow-600' }
-      case 'info': return { icon: 'pi-info-circle', color: 'text-blue-600' }
-      case 'debug': return { icon: 'pi-cog', color: 'text-gray-500' }
-      default: return { icon: 'pi-circle', color: 'text-gray-600' }
+      case 'error': return { icon: 'pi-times-circle', color: 'text-red-400' }
+      case 'warn': return { icon: 'pi-exclamation-triangle', color: 'text-yellow-400' }
+      case 'info': return { icon: 'pi-info-circle', color: 'text-blue-400' }
+      case 'debug': return { icon: 'pi-cog', color: 'text-gray-400' }
+      default: return { icon: 'pi-circle', color: 'text-gray-300' }
     }
   }
 
@@ -175,24 +175,27 @@ export default function JobPage() {
       )}
 
       {/* Logs Panel */}
-      <Card>
-        <div className="flex align-items-center justify-content-between mb-3">
-          <div className="flex align-items-center gap-2">
+      <Card style={{ padding: '1.5rem' }}>
+        <div className="flex align-items-center justify-content-between mb-4">
+          <div className="flex align-items-center gap-3">
             <i className="pi pi-list text-2xl text-blue-600"></i>
-            <h2 className="text-2xl font-bold m-0">Live Logs</h2>
+            <h2 className="text-2xl font-bold m-0 text-slate-800">Live Logs</h2>
             <Badge value={logs.length} severity="info" />
           </div>
         </div>
 
-        <ScrollPanel style={{ width: '100%', height: '400px' }} className="custom-scrollpanel">
-          <div className="font-mono text-sm space-y-1 p-3 bg-gray-900 text-white rounded-lg">
-            {logs.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <i className="pi pi-spin pi-spinner text-2xl mb-2"></i>
-                <p>Waiting for logs...</p>
-              </div>
-            ) : (
-              logs.map((log, index) => {
+        <div
+          className="font-mono text-sm p-4 bg-slate-900 text-white rounded-lg border border-slate-700"
+          style={{ height: '450px', overflowY: 'auto' }}
+        >
+          {logs.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <i className="pi pi-spin pi-spinner text-2xl mb-2 block"></i>
+              <p>Waiting for logs...</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {logs.map((log, index) => {
                 const { icon, color } = getLogIcon(log.level)
                 return (
                   <motion.div
@@ -200,23 +203,23 @@ export default function JobPage() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex align-items-start gap-2 py-1"
+                    className="flex align-items-start gap-3 py-2 px-2 hover:bg-slate-800 rounded"
                   >
-                    <i className={`pi ${icon} ${color}`}></i>
-                    <span className="text-gray-400 text-xs">
+                    <i className={`pi ${icon} ${color} flex-shrink-0 mt-1`}></i>
+                    <span className="text-gray-400 text-xs flex-shrink-0 mt-0.5" style={{ minWidth: '80px' }}>
                       {new Date(log.timestamp).toLocaleTimeString()}
                     </span>
-                    <span className={`font-semibold uppercase text-xs ${color}`}>
+                    <span className={`font-semibold uppercase text-xs ${color} flex-shrink-0 mt-0.5`} style={{ minWidth: '60px' }}>
                       [{log.level}]
                     </span>
-                    <span className="flex-1">{log.message}</span>
+                    <span className="flex-1 text-gray-200">{log.message}</span>
                   </motion.div>
                 )
-              })
-            )}
-            <div ref={logsEndRef} />
-          </div>
-        </ScrollPanel>
+              })}
+            </div>
+          )}
+          <div ref={logsEndRef} />
+        </div>
       </Card>
 
       {/* Results Display */}
@@ -226,34 +229,34 @@ export default function JobPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card>
-            <div className="flex align-items-center gap-2 mb-4">
+          <Card style={{ padding: '1.5rem' }}>
+            <div className="flex align-items-center gap-3 mb-5">
               <i className="pi pi-check-circle text-3xl text-green-600"></i>
-              <h2 className="text-2xl font-bold m-0">Results</h2>
+              <h2 className="text-2xl font-bold m-0 text-slate-800">Results</h2>
             </div>
 
             {isAnalysisResult(result) && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Card className="bg-blue-50">
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-blue-50 border-blue-200" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
-                      <i className="pi pi-flag text-3xl text-blue-600 mb-2"></i>
-                      <div className="text-3xl font-bold text-blue-700">{result.summary.total_flags}</div>
-                      <div className="text-sm text-gray-600">Total Flags</div>
+                      <i className="pi pi-flag text-4xl text-blue-600 mb-3"></i>
+                      <div className="text-3xl font-bold text-blue-700 mb-1">{result.summary.total_flags}</div>
+                      <div className="text-sm font-medium text-slate-600">Total Flags</div>
                     </div>
                   </Card>
-                  <Card className="bg-purple-50">
+                  <Card className="bg-purple-50 border-purple-200" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
-                      <i className="pi pi-code text-3xl text-purple-600 mb-2"></i>
-                      <div className="text-3xl font-bold text-purple-700">{result.summary.total_references}</div>
-                      <div className="text-sm text-gray-600">References</div>
+                      <i className="pi pi-code text-4xl text-purple-600 mb-3"></i>
+                      <div className="text-3xl font-bold text-purple-700 mb-1">{result.summary.total_references}</div>
+                      <div className="text-sm font-medium text-slate-600">References</div>
                     </div>
                   </Card>
-                  <Card className="bg-orange-50">
+                  <Card className="bg-orange-50 border-orange-200" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
-                      <i className="pi pi-clock text-3xl text-orange-600 mb-2"></i>
-                      <div className="text-3xl font-bold text-orange-700">{result.summary.estimated_effort_hours}h</div>
-                      <div className="text-sm text-gray-600">Est. Effort</div>
+                      <i className="pi pi-clock text-4xl text-orange-600 mb-3"></i>
+                      <div className="text-3xl font-bold text-orange-700 mb-1">{result.summary.estimated_effort_hours}h</div>
+                      <div className="text-sm font-medium text-slate-600">Est. Effort</div>
                     </div>
                   </Card>
                 </div>
@@ -367,18 +370,18 @@ export default function JobPage() {
                 )}
 
                 {result.diff && (
-                  <Card>
-                    <h3 className="text-lg font-semibold mb-2 flex align-items-center gap-2">
-                      <i className="pi pi-code"></i>
+                  <Card style={{ padding: '1.5rem' }}>
+                    <h3 className="text-lg font-semibold mb-3 flex align-items-center gap-2 text-slate-800">
+                      <i className="pi pi-code text-orange-600"></i>
                       Diff (PR Creation Failed)
                     </h3>
-                    <pre className="text-xs bg-gray-900 text-white p-3 rounded overflow-x-auto border max-h-96 overflow-y-auto">
+                    <pre className="text-xs bg-slate-900 text-white p-4 rounded overflow-x-auto border border-slate-700 max-h-96 overflow-y-auto">
                       {result.diff}
                     </pre>
                     {result.commit_message && (
-                      <div className="mt-3">
-                        <strong className="text-sm">Proposed Commit Message:</strong>
-                        <pre className="text-xs bg-gray-50 p-3 rounded overflow-x-auto border mt-1">
+                      <div className="mt-4">
+                        <strong className="text-sm text-slate-800 block mb-2">Proposed Commit Message:</strong>
+                        <pre className="text-xs bg-slate-100 text-slate-800 p-4 rounded overflow-x-auto border border-slate-300 mt-1">
                           {result.commit_message}
                         </pre>
                       </div>
