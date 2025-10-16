@@ -108,7 +108,7 @@ export default function RootLayout({
             </nav>
 
             {/* Main Content */}
-            <main className="flex-1 container mx-auto px-4 py-6">
+            <main className="flex-1 container mx-auto px-6 py-8">
               {children}
             </main>
 

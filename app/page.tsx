@@ -80,7 +80,7 @@ export default function Home() {
       </motion.div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 py-8">
         {features.map((feature, index) => (
           <motion.div
             key={index}
@@ -89,15 +89,18 @@ export default function Home() {
             transition={{ duration: 0.5, delay: feature.delay }}
           >
             <Card
-              className="h-full hover:shadow-lg transition-all cursor-pointer bounce-in"
-              style={{ animation: `bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${feature.delay}s` }}
+              className="h-full hover:shadow-xl transition-all cursor-pointer"
+              style={{
+                animation: `bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${feature.delay}s`,
+                padding: '1.5rem'
+              }}
             >
               <div className="text-center">
-                <div className={`inline-flex align-items-center justify-content-center ${feature.bgColor} border-circle mb-3`} style={{ width: '60px', height: '60px' }}>
-                  <i className={`pi ${feature.icon} ${feature.color}`} style={{ fontSize: '2rem' }}></i>
+                <div className={`inline-flex align-items-center justify-content-center ${feature.bgColor} border-circle mb-4`} style={{ width: '70px', height: '70px' }}>
+                  <i className={`pi ${feature.icon} ${feature.color}`} style={{ fontSize: '2.25rem' }}></i>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+                <h3 className="text-xl font-bold mb-3 text-slate-800">{feature.title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{feature.description}</p>
               </div>
             </Card>
           </motion.div>
@@ -105,12 +108,12 @@ export default function Home() {
       </div>
 
       {/* Getting Started Section */}
-      <Card className="mt-6">
-        <h2 className="text-3xl font-bold mb-6 text-center">
+      <Card style={{ padding: '2rem', marginTop: '2rem' }}>
+        <h2 className="text-3xl font-bold mb-8 text-center text-slate-800">
           <i className="pi pi-play-circle mr-2 text-blue-600"></i>
           Getting Started
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -120,13 +123,13 @@ export default function Home() {
               className="flex flex-column align-items-center text-center"
             >
               <div
-                className="flex align-items-center justify-content-center bg-gradient-to-r from-blue-600 to-purple-600 text-white border-circle mb-3 font-bold pulse-glow"
-                style={{ width: '50px', height: '50px', fontSize: '1.5rem' }}
+                className="flex align-items-center justify-content-center bg-gradient-to-r from-blue-600 to-purple-600 text-white border-circle mb-4 font-bold"
+                style={{ width: '56px', height: '56px', fontSize: '1.75rem', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}
               >
                 {step.number}
               </div>
-              <i className={`pi ${step.icon} text-3xl text-blue-600 mb-2`}></i>
-              <p className="text-gray-700">{step.text}</p>
+              <i className={`pi ${step.icon} text-4xl text-blue-600 mb-3`}></i>
+              <p className="text-slate-700 font-medium leading-relaxed">{step.text}</p>
             </motion.div>
           ))}
         </div>
@@ -137,22 +140,22 @@ export default function Home() {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.5 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6"
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8"
       >
-        <Card className="text-center bg-gradient-to-br from-blue-50 to-blue-100">
-          <i className="pi pi-bolt text-4xl text-blue-600 mb-2"></i>
-          <h3 className="text-3xl font-bold text-blue-600">Fast</h3>
-          <p className="text-gray-600">Automated analysis in minutes</p>
+        <Card className="text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200" style={{ padding: '2rem' }}>
+          <i className="pi pi-bolt text-5xl text-blue-600 mb-3"></i>
+          <h3 className="text-3xl font-bold text-blue-700 mb-2">Fast</h3>
+          <p className="text-slate-700 font-medium">Automated analysis in minutes</p>
         </Card>
-        <Card className="text-center bg-gradient-to-br from-green-50 to-green-100">
-          <i className="pi pi-shield text-4xl text-green-600 mb-2"></i>
-          <h3 className="text-3xl font-bold text-green-600">Safe</h3>
-          <p className="text-gray-600">Tests run before every PR</p>
+        <Card className="text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200" style={{ padding: '2rem' }}>
+          <i className="pi pi-shield text-5xl text-green-600 mb-3"></i>
+          <h3 className="text-3xl font-bold text-green-700 mb-2">Safe</h3>
+          <p className="text-slate-700 font-medium">Tests run before every PR</p>
         </Card>
-        <Card className="text-center bg-gradient-to-br from-purple-50 to-purple-100">
-          <i className="pi pi-star text-4xl text-purple-600 mb-2"></i>
-          <h3 className="text-3xl font-bold text-purple-600">Smart</h3>
-          <p className="text-gray-600">AI-powered code analysis</p>
+        <Card className="text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200" style={{ padding: '2rem' }}>
+          <i className="pi pi-star text-5xl text-purple-600 mb-3"></i>
+          <h3 className="text-3xl font-bold text-purple-700 mb-2">Smart</h3>
+          <p className="text-slate-700 font-medium">AI-powered code analysis</p>
         </Card>
       </motion.div>
     </div>

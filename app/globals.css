@@ -8,9 +8,9 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 30, 30, 30;
-  --background-start-rgb: 250, 251, 252;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 15, 23, 42;
+  --background-start-rgb: 241, 245, 249;
+  --background-end-rgb: 248, 250, 252;
   --primary-color: #3B82F6;
   --primary-hover: #2563EB;
   --accent-color: #8B5CF6;
@@ -166,36 +166,109 @@ body {
   font-family: inherit;
 }
 
+.p-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.p-datatable {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  color: #334155;
+  font-weight: 600;
+  padding: 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+}
+
 .p-datatable .p-datatable-tbody > tr:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: #f8fafc;
   transition: background 0.2s ease;
 }
 
 .p-button {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
 }
 
-.p-button:hover {
-  transform: translateY(-2px);
+.p-button:not(:disabled):hover {
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.p-button:active {
+.p-button:not(:disabled):active {
   transform: translateY(0);
 }
 
+.p-button-outlined {
+  background: white;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.p-button-outlined:not(:disabled):hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
 .p-dialog {
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .p-dialog-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  padding: 1.5rem;
+  border-bottom: none;
+}
+
+.p-dialog-content {
+  padding: 1.5rem;
+}
+
+.p-inputtext {
+  border-radius: 8px;
+  border-color: #cbd5e1;
+  padding: 0.625rem 0.875rem;
+}
+
+.p-inputtext:enabled:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.p-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 0.375rem 0.625rem;
+}
+
+.p-message {
+  border-radius: 8px;
+  border-width: 1px;
 }
 
 .p-toast {
   backdrop-filter: blur(10px);
+}
+
+.p-toast .p-toast-message {
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Easter egg hidden character */

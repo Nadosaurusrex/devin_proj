@@ -93,16 +93,17 @@ export default function ConnectPage() {
         ))}
       </div>
 
-      <Card className="shadow-lg">
+      <Card style={{ padding: '2rem' }}>
         {showSuccess && (
           <Message
             severity="success"
             text="Successfully connected! Redirecting to flags..."
-            className="w-full mb-4"
+            className="mb-4"
+            style={{ width: '100%' }}
           />
         )}
 
-        <form onSubmit={handleConnect} className="space-y-4">
+        <form onSubmit={handleConnect} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="owner" className="block text-sm font-medium mb-2">
@@ -214,14 +215,14 @@ export default function ConnectPage() {
         </form>
       </Card>
 
-      <div className="mt-6 text-center">
-        <Card className="bg-blue-50">
-          <div className="flex align-items-center justify-content-center gap-3">
-            <i className="pi pi-info-circle text-blue-600 text-2xl"></i>
-            <div className="text-left">
-              <strong className="text-blue-900">Pro Tip:</strong>
-              <p className="text-blue-700 text-sm">
-                Make sure your GitHub token has <code>repo</code> scope to read the registry file.
+      <div className="mt-6">
+        <Card className="bg-blue-50 border-blue-200" style={{ padding: '1.25rem' }}>
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-info-circle text-blue-600 text-2xl flex-shrink-0"></i>
+            <div>
+              <strong className="text-blue-900 text-base">Pro Tip:</strong>
+              <p className="text-slate-700 text-sm mt-1 mb-0">
+                Make sure your GitHub token has <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">repo</code> scope to read the registry file.
               </p>
             </div>
           </div>
