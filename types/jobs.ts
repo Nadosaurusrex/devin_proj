@@ -1,4 +1,4 @@
-import type { AnalysisResult } from './devin'
+import type { AnalysisResult, RemovalResult } from './devin'
 
 /**
  * Job types
@@ -30,7 +30,7 @@ export interface Job {
   updatedAt: string
   devinSessionId?: string
   logs: LogEntry[]
-  result?: AnalysisResult
+  result?: AnalysisResult | RemovalResult
   error?: string
   metadata: {
     owner: string

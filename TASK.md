@@ -173,4 +173,66 @@ Implement POST /api/analyze to create Devin analysis sessions and GET /api/jobs/
 - [ ] SSE streams correctly
 
 ## Status
+✅ COMPLETED - Mock and real mode both working
+
+---
+
+# Task: Remove Flow - PR Creation & Diff Fallback
+
+## Goal
+Implement POST /api/remove to instruct Devin to remove flags safely and create a PR. Stream logs via existing SSE endpoint. Parse final JSON for PR URL or provide unified diff as fallback.
+
+## Requirements
+- [ ] Add removal types to `types/devin.ts`
+- [ ] Create `createRemoveSession()` in `lib/devin.ts`
+  - Build removal instruction with template from CLAUDE.md
+  - Pass GITHUB_TOKEN as secret env variable
+  - Include all removal parameters
+- [ ] Create `app/api/remove/route.ts` as POST endpoint
+  - Input: owner, repo, branch, flags[], targetBehavior, registryFiles[], testCommand?, buildCommand?, workingDir?
+  - Create job and Devin session
+  - Return jobId and streamUrl
+- [ ] Update mock implementation
+  - Generate fake PR URL
+  - Or generate unified diff if "PR fails"
+- [ ] Update SSE streaming to parse removal results
+  - Extract pr_url, branch, summary from structured_output
+  - Handle diff fallback case
+
+## Constraints
+- **Mask tokens** - Never log GITHUB_TOKEN
+- **Structured output** - Parse JSON with pr_url, branch, summary
+- **Fallback handling** - If PR creation fails, provide unified diff
+- Use existing `/api/jobs/[id]/stream` endpoint
+
+## Implementation Plan
+
+### Phase 1: Types
+1. Add RemovalResult type
+2. Add RemoveSessionParams type
+
+### Phase 2: Removal Client
+1. Build removal instruction from template
+2. Implement createRemoveSession() with real API
+3. Add mock implementation with PR URL or diff
+
+### Phase 3: API Route
+1. Create POST /api/remove
+2. Validate inputs (targetBehavior, flags, etc.)
+3. Create job with type='remove'
+4. Start Devin session asynchronously
+
+### Phase 4: Testing
+- [ ] Test mock mode with PR success
+- [ ] Test mock mode with diff fallback
+- [ ] Verify SSE parses removal results
+- [ ] Typecheck clean
+
+## After Implementation
+- [ ] Typecheck passing
+- [ ] Mock mode E2E working
+- [ ] Can parse PR URL from results
+- [ ] Can parse diff from results
+
+## Status
 🚧 IN PROGRESS

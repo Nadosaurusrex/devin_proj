@@ -41,7 +41,7 @@ export interface SessionStatusResponse {
   status: DevinSessionStatus
   output?: string
   error?: string
-  result?: AnalysisResult
+  result?: AnalysisResult | RemovalResult
 }
 
 /**
@@ -83,4 +83,36 @@ export interface AnalyzeSessionParams {
   flags: string[] // Array of flag keys to analyze
   workingDir?: string
   patterns?: string[] // File patterns to search
+}
+
+/**
+ * Remove session parameters
+ */
+export interface RemoveSessionParams {
+  owner: string
+  repo: string
+  branch: string
+  flags: string[] // Array of flag keys to remove
+  targetBehavior: 'on' | 'off' // Inline flags as always on or always off
+  registryFiles: string[] // Registry files to update
+  testCommand?: string // Command to run tests (e.g., "npm test")
+  buildCommand?: string // Command to build (e.g., "npm run build")
+  workingDir?: string
+}
+
+/**
+ * Removal result from Devin
+ */
+export interface RemovalResult {
+  pr_url?: string // GitHub PR URL if successfully created
+  branch?: string // Branch name where changes were pushed
+  diff?: string // Unified diff if PR creation failed
+  commit_message?: string // Proposed commit message
+  summary: {
+    flags_removed: number
+    files_modified: number
+    tests_passed: boolean
+    build_passed: boolean
+  }
+  errors?: string[] // Any errors encountered
 }
