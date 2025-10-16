@@ -44,9 +44,9 @@ export default function ConnectPage() {
   }
 
   const popularRepos = [
-    { owner: 'Nadosaurusrex', repo: 'devin_proj', icon: 'pi-star' },
-    { owner: 'test', repo: 'test-repo', icon: 'pi-code' },
-    { owner: 'facebook', repo: 'react', icon: 'pi-github' }
+    { owner: 'Nadosaurusrex', repo: 'devin_proj', icon: 'pi-star', hasTestData: true },
+    { owner: 'test', repo: 'test-repo', icon: 'pi-code', hasTestData: false },
+    { owner: 'facebook', repo: 'react', icon: 'pi-github', hasTestData: false }
   ]
 
   const fillExample = (example: typeof popularRepos[0]) => {
@@ -76,22 +76,71 @@ export default function ConnectPage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: 0.1 * index }}
+            style={{ position: 'relative' }}
           >
             <Card
-              className="cursor-pointer hover:shadow-lg transition-all"
+              className={`cursor-pointer hover:shadow-lg transition-all ${
+                example.hasTestData ? 'border-2 border-blue-400' : ''
+              }`}
               onClick={() => fillExample(example)}
+              style={{
+                background: example.hasTestData
+                  ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+                  : undefined,
+                animation: example.hasTestData ? 'pulse-glow 2s ease-in-out infinite' : undefined
+              }}
             >
-              <div className="flex align-items-center gap-3">
-                <i className={`pi ${example.icon} text-2xl text-purple-600`}></i>
-                <div>
-                  <div className="font-bold">{example.owner}</div>
-                  <div className="text-sm text-gray-600">{example.repo}</div>
+              <div className="flex align-items-center justify-content-between gap-3">
+                <div className="flex align-items-center gap-3">
+                  <i className={`pi ${example.icon} text-2xl ${example.hasTestData ? 'text-blue-600' : 'text-purple-600'}`}></i>
+                  <div>
+                    <div className="font-bold">
+                      {example.owner}
+                    </div>
+                    <div className="text-sm text-gray-600">{example.repo}</div>
+                  </div>
                 </div>
+                {example.hasTestData && (
+                  <i className="pi pi-arrow-right text-blue-600 text-xl"></i>
+                )}
               </div>
             </Card>
+            {example.hasTestData && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  right: '12px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.4)',
+                  zIndex: 10
+                }}
+              >
+                ✨ Try this!
+              </motion.div>
+            )}
           </motion.div>
         ))}
       </div>
+
+      <style jsx>{`
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5), 0 0 30px rgba(118, 75, 162, 0.3);
+          }
+        }
+      `}</style>
 
       <Card style={{ padding: '2rem' }}>
         {showSuccess && (

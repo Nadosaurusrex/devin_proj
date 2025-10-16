@@ -56,11 +56,11 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
   }
 
   const header = (
-    <div className="flex align-items-center gap-3">
+    <div className="flex align-items-center gap-3 p-3">
       <i className="pi pi-trash text-3xl text-red-500"></i>
       <div>
         <h2 className="text-2xl font-bold m-0 text-red-600">Remove Flag</h2>
-        <p className="text-sm text-gray-600 m-0 mt-1">
+        <p className="text-sm text-gray-600 m-0 mt-2">
           <i className="pi pi-github mr-1"></i>
           {repoConfig.owner}/{repoConfig.repo}
         </p>
@@ -80,21 +80,22 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
       closable={!submitting}
       blockScroll
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6 p-5">
         <Message
           severity="error"
           className="w-full"
           content={
-            <div className="space-y-1">
-              <div>
-                <strong>Flag:</strong> <code className="font-mono bg-white px-2 py-1 rounded">{flag.key}</code>
+            <div className="space-y-2">
+              <div className="flex flex-column gap-1">
+                <strong>Flag:</strong> <code className="font-mono bg-white px-2 py-1 rounded mt-1">{flag.key}</code>
               </div>
               <div>
-                <strong>Current State:</strong> <span className="capitalize">{flag.state}</span>
+                <strong>Current State:</strong> <span className="capitalize ml-2">{flag.state}</span>
               </div>
               {flag.description && (
-                <div>
-                  <strong>Description:</strong> {flag.description}
+                <div className="flex flex-column gap-1">
+                  <strong>Description:</strong>
+                  <span className="mt-1">{flag.description}</span>
                 </div>
               )}
             </div>
@@ -115,11 +116,11 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
         <Divider />
 
         <div>
-          <label className="block text-sm font-medium mb-3">
+          <label className="block text-sm font-medium mb-4">
             <i className="pi pi-cog mr-2"></i>
             Target Behavior
           </label>
-          <div className="flex flex-column gap-3">
+          <div className="flex flex-column gap-3 p-4 bg-gray-50 border-round">
             <div className="flex align-items-center">
               <RadioButton
                 inputId="behavior-on"
@@ -127,7 +128,7 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
                 checked={targetBehavior === 'on'}
                 onChange={(e) => setTargetBehavior(e.value)}
               />
-              <label htmlFor="behavior-on" className="ml-2">
+              <label htmlFor="behavior-on" className="ml-3 cursor-pointer">
                 <strong className="text-green-600">ON</strong> - Replace with enabled behavior (true)
               </label>
             </div>
@@ -138,7 +139,7 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
                 checked={targetBehavior === 'off'}
                 onChange={(e) => setTargetBehavior(e.value)}
               />
-              <label htmlFor="behavior-off" className="ml-2">
+              <label htmlFor="behavior-off" className="ml-3 cursor-pointer">
                 <strong className="text-gray-600">OFF</strong> - Replace with disabled behavior (false)
               </label>
             </div>
@@ -146,7 +147,7 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
         </div>
 
         <div>
-          <label htmlFor="registryFiles" className="block text-sm font-medium mb-2">
+          <label htmlFor="registryFiles" className="block text-sm font-medium mb-3">
             <i className="pi pi-file mr-2"></i>
             Registry Files
           </label>
@@ -157,30 +158,31 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
             placeholder="e.g., __fixtures__/flags.json"
             className="w-full"
           />
-          <small className="text-gray-500">
+          <small className="text-gray-500 block mt-2">
             Paths to registry files that need to be updated
           </small>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="workingDir" className="block text-sm font-medium mb-2">
-              <i className="pi pi-folder mr-2"></i>
-              Working Directory (Optional)
-            </label>
-            <InputText
-              id="workingDir"
-              value={workingDir}
-              onChange={(e) => setWorkingDir(e.target.value)}
-              placeholder="e.g., packages/web"
-              className="w-full"
-            />
-          </div>
+        <div>
+          <label htmlFor="workingDir" className="block text-sm font-medium mb-3">
+            <i className="pi pi-folder mr-2"></i>
+            Working Directory (Optional)
+          </label>
+          <InputText
+            id="workingDir"
+            value={workingDir}
+            onChange={(e) => setWorkingDir(e.target.value)}
+            placeholder="e.g., packages/web"
+            className="w-full"
+          />
+          <small className="text-gray-500 block mt-2">
+            Subdirectory to search for flag references
+          </small>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="testCommand" className="block text-sm font-medium mb-2">
+            <label htmlFor="testCommand" className="block text-sm font-medium mb-3">
               <i className="pi pi-check-square mr-2"></i>
               Test Command (Optional)
             </label>
@@ -191,13 +193,13 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
               placeholder="e.g., npm test"
               className="w-full"
             />
-            <small className="text-gray-500">
+            <small className="text-gray-500 block mt-2">
               Command to run tests before PR
             </small>
           </div>
 
           <div>
-            <label htmlFor="buildCommand" className="block text-sm font-medium mb-2">
+            <label htmlFor="buildCommand" className="block text-sm font-medium mb-3">
               <i className="pi pi-wrench mr-2"></i>
               Build Command (Optional)
             </label>
@@ -208,7 +210,7 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
               placeholder="e.g., npm run build"
               className="w-full"
             />
-            <small className="text-gray-500">
+            <small className="text-gray-500 block mt-2">
               Command to build before PR
             </small>
           </div>
@@ -216,7 +218,7 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
 
         <Divider />
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <Button
             type="submit"
             label={submitting ? 'Starting Removal...' : 'Remove Flag & Create PR'}

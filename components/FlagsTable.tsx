@@ -21,9 +21,9 @@ export function FlagsTable({ flags, loading, onAnalyze, onRemove }: FlagsTablePr
 
   if (loading) {
     return (
-      <div className="flex flex-column align-items-center justify-content-center p-8">
+      <div className="flex flex-column align-items-center justify-content-center p-8 gap-3">
         <ProgressSpinner style={{ width: '50px', height: '50px' }} />
-        <p className="mt-3 text-gray-600">Loading flags...</p>
+        <p className="mt-2 text-gray-600">Loading flags...</p>
       </div>
     )
   }
@@ -31,8 +31,8 @@ export function FlagsTable({ flags, loading, onAnalyze, onRemove }: FlagsTablePr
   if (flags.length === 0) {
     return (
       <div className="text-center p-8 border-round bg-gray-50">
-        <i className="pi pi-inbox text-6xl text-gray-400 mb-3"></i>
-        <p className="text-xl text-gray-600 font-semibold">No flags found</p>
+        <i className="pi pi-inbox text-6xl text-gray-400 mb-4"></i>
+        <p className="text-xl text-gray-600 font-semibold mb-2">No flags found</p>
         <p className="text-gray-500">Check your registry path and try again</p>
       </div>
     )
@@ -110,7 +110,7 @@ export function FlagsTable({ flags, loading, onAnalyze, onRemove }: FlagsTablePr
 
   const actionsBodyTemplate = (flag: Flag) => {
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button
           icon="pi pi-search"
           label="Analyze"
@@ -134,8 +134,8 @@ export function FlagsTable({ flags, loading, onAnalyze, onRemove }: FlagsTablePr
   }
 
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-3">
-      <div className="flex align-items-center gap-2">
+    <div className="flex flex-wrap align-items-center justify-content-between gap-4 p-3">
+      <div className="flex align-items-center gap-3">
         <i className="pi pi-list text-2xl text-blue-600"></i>
         <span className="text-2xl font-bold">Feature Flags</span>
         <Tag value={`${flags.length} total`} severity="info" />

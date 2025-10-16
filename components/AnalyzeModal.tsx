@@ -44,11 +44,11 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
   }
 
   const header = (
-    <div className="flex align-items-center gap-3">
+    <div className="flex align-items-center gap-3 p-3">
       <i className="pi pi-search text-3xl"></i>
       <div>
         <h2 className="text-2xl font-bold m-0">Analyze Flag</h2>
-        <p className="text-sm text-gray-600 m-0 mt-1">
+        <p className="text-sm text-gray-600 m-0 mt-2">
           <i className="pi pi-github mr-1"></i>
           {repoConfig.owner}/{repoConfig.repo}
         </p>
@@ -68,21 +68,22 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
       closable={!submitting}
       blockScroll
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6 p-5">
         <Message
           severity="info"
           className="w-full"
           content={
-            <div className="space-y-1">
-              <div>
-                <strong>Flag:</strong> <code className="font-mono bg-white px-2 py-1 rounded">{flag.key}</code>
+            <div className="space-y-2">
+              <div className="flex flex-column gap-1">
+                <strong>Flag:</strong> <code className="font-mono bg-white px-2 py-1 rounded mt-1">{flag.key}</code>
               </div>
               <div>
-                <strong>Current State:</strong> <span className="capitalize">{flag.state}</span>
+                <strong>Current State:</strong> <span className="capitalize ml-2">{flag.state}</span>
               </div>
               {flag.description && (
-                <div>
-                  <strong>Description:</strong> {flag.description}
+                <div className="flex flex-column gap-1">
+                  <strong>Description:</strong>
+                  <span className="mt-1">{flag.description}</span>
                 </div>
               )}
             </div>
@@ -90,7 +91,7 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
         />
 
         <div>
-          <label htmlFor="workingDir" className="block text-sm font-medium mb-2">
+          <label htmlFor="workingDir" className="block text-sm font-medium mb-3">
             <i className="pi pi-folder mr-2"></i>
             Working Directory (Optional)
           </label>
@@ -101,13 +102,13 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
             placeholder="e.g., packages/web"
             className="w-full"
           />
-          <small className="text-gray-500">
+          <small className="text-gray-500 block mt-2">
             Specify a subdirectory to narrow the search scope
           </small>
         </div>
 
         <div>
-          <label htmlFor="patterns" className="block text-sm font-medium mb-2">
+          <label htmlFor="patterns" className="block text-sm font-medium mb-3">
             <i className="pi pi-filter mr-2"></i>
             File Patterns (Optional)
           </label>
@@ -118,7 +119,7 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
             placeholder="Add pattern (e.g., **/*.ts) and press Enter"
             className="w-full"
           />
-          <small className="text-gray-500">
+          <small className="text-gray-500 block mt-2">
             Glob patterns to filter files. Press Enter after each pattern.
           </small>
         </div>
@@ -129,12 +130,12 @@ export function AnalyzeModal({ flag, repoConfig, onClose, onSubmit }: AnalyzeMod
           content={
             <div>
               <strong>Note:</strong> Analysis may take a few minutes depending on repository size.
-              You'll be redirected to the job page to view progress in real-time.
+              You&apos;ll be redirected to the job page to view progress in real-time.
             </div>
           }
         />
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-4">
           <Button
             type="submit"
             label={submitting ? 'Starting Analysis...' : 'Start Analysis'}

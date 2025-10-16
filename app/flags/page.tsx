@@ -39,6 +39,21 @@ export default function FlagsPage() {
     }
   }, [])
 
+  // Check for pending flag removal from analysis page
+  useEffect(() => {
+    if (flags.length === 0) return
+
+    const pendingFlagKey = localStorage.getItem('pending_remove_flag')
+    if (pendingFlagKey) {
+      const flag = flags.find(f => f.key === pendingFlagKey)
+      if (flag) {
+        setSelectedFlag(flag)
+        setShowRemoveModal(true)
+        localStorage.removeItem('pending_remove_flag')
+      }
+    }
+  }, [flags])
+
   const loadFlags = async (repoConfig: RepoConfig) => {
     setLoading(true)
     setError(null)
@@ -197,10 +212,10 @@ export default function FlagsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center py-12"
       >
-        <Card>
-          <i className="pi pi-inbox text-6xl text-gray-400 mb-4"></i>
-          <h1 className="text-3xl font-bold mb-2">No Repository Connected</h1>
-          <p className="text-gray-600 mb-6">
+        <Card className="p-6">
+          <i className="pi pi-inbox text-6xl text-gray-400 mb-6"></i>
+          <h1 className="text-3xl font-bold mb-3">No Repository Connected</h1>
+          <p className="text-gray-600 mb-8">
             Connect to a GitHub repository to view and manage feature flags
           </p>
           <Button
@@ -222,13 +237,13 @@ export default function FlagsPage() {
     >
       <Toast ref={toast} />
 
-      <div className="flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+      <div className="flex flex-wrap justify-content-between align-items-start gap-4 mb-6">
         <div>
-          <div className="flex align-items-center gap-2 mb-2">
+          <div className="flex align-items-center gap-3 mb-3">
             <i className="pi pi-flag text-3xl text-blue-600"></i>
             <h1 className="text-4xl font-bold m-0">Feature Flags</h1>
           </div>
-          <p className="text-gray-600 flex align-items-center gap-2">
+          <p className="text-gray-600 flex align-items-center gap-2 mt-2">
             <i className="pi pi-github"></i>
             <span className="font-mono font-semibold">{config.owner}/{config.repo}</span>
             <span className="text-gray-400">|</span>
@@ -256,7 +271,7 @@ export default function FlagsPage() {
       {error && (
         <Message
           severity="error"
-          className="w-full mb-4"
+          className="w-full mb-6"
           content={
             <div className="flex align-items-center justify-content-between w-full">
               <div>

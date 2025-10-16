@@ -115,6 +115,12 @@ export default function JobPage() {
     navigator.clipboard.writeText(text)
   }
 
+  const handleRemoveFlag = (flagKey: string) => {
+    // Store the flag key in localStorage so the flags page can open the remove modal
+    localStorage.setItem('pending_remove_flag', flagKey)
+    router.push('/flags')
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -237,6 +243,26 @@ export default function JobPage() {
 
             {isAnalysisResult(result) && (
               <div className="space-y-5">
+                {result.flags.length > 0 && (
+                  <div className="flex justify-content-end mb-3">
+                    <Button
+                      label={`Remove ${result.flags.length > 1 ? 'All Flags' : 'Flag'}`}
+                      icon="pi pi-trash"
+                      severity="danger"
+                      outlined
+                      onClick={() => {
+                        if (result.flags.length === 1) {
+                          handleRemoveFlag(result.flags[0].key)
+                        } else {
+                          // For multiple flags, just navigate to flags page
+                          router.push('/flags')
+                        }
+                      }}
+                      tooltip={result.flags.length > 1 ? 'Go to flags page to remove multiple flags' : 'Remove this flag'}
+                      tooltipOptions={{ position: 'top' }}
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="bg-blue-50 border-blue-200" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
@@ -271,15 +297,26 @@ export default function JobPage() {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card className="mb-3" style={{ padding: '1.5rem' }}>
-                      <div className="flex justify-content-between align-items-start mb-3">
+                      <div className="flex justify-content-between align-items-start mb-3 gap-3">
                         <div className="flex align-items-center gap-2">
                           <i className="pi pi-flag text-2xl text-blue-600"></i>
                           <code className="text-lg font-bold">{flag.key}</code>
                         </div>
-                        <Tag
-                          value={`${flag.risk_level} risk`}
-                          severity={flag.risk_level === 'low' ? 'success' : flag.risk_level === 'medium' ? 'warning' : 'danger'}
-                        />
+                        <div className="flex align-items-center gap-2">
+                          <Tag
+                            value={`${flag.risk_level} risk`}
+                            severity={flag.risk_level === 'low' ? 'success' : flag.risk_level === 'medium' ? 'warning' : 'danger'}
+                          />
+                          <Button
+                            label="Remove"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            size="small"
+                            onClick={() => handleRemoveFlag(flag.key)}
+                            tooltip="Remove this flag"
+                            tooltipOptions={{ position: 'top' }}
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div>
