@@ -314,11 +314,54 @@ export async function getSessionStatus(
       'cancelled': 'cancelled',
     }
 
+    // Try to extract structured result
+    let result: AnalysisResult | RemovalResult | undefined = data.structured_output
+
+    // If no structured output, try to fetch from attachments
+    if (!result && data.attachments && data.attachments.length > 0 && statusMap[data.status_enum] === 'completed') {
+      try {
+        // Look for JSON attachment
+        const jsonAttachment = data.attachments.find((att: { name: string; url: string }) =>
+          att.name?.endsWith('.json')
+        )
+        if (jsonAttachment && jsonAttachment.url) {
+          console.log('Fetching Devin attachment from:', jsonAttachment.url)
+          const attachmentResponse = await fetch(jsonAttachment.url)
+          if (attachmentResponse.ok) {
+            result = await attachmentResponse.json()
+            console.log('Successfully fetched Devin result from attachment')
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch attachment from Devin:', e)
+      }
+    }
+
+    // If still no result, try to extract JSON from the output text
+    if (!result && output && statusMap[data.status_enum] === 'completed') {
+      try {
+        // Look for JSON in code blocks (```json ... ```)
+        const jsonMatch = output.match(/```json\s*([\s\S]*?)\s*```/)
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[1])
+        } else {
+          // Try to find JSON object in the text
+          const objectMatch = output.match(/\{[\s\S]*"flags"[\s\S]*\}/)
+          if (objectMatch) {
+            result = JSON.parse(objectMatch[0])
+          }
+        }
+      } catch (e) {
+        // Failed to parse JSON from output, will remain undefined
+        console.warn('Failed to parse JSON from Devin output:', e)
+      }
+    }
+
     return {
       session_id: data.session_id,
       status: statusMap[data.status_enum] || 'running',
       output,
-      result: data.structured_output || undefined,
+      result,
     } as SessionStatusResponse
   } catch (error) {
     if (error instanceof DevinApiError) {
