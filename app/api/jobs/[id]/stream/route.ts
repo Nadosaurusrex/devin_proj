@@ -3,6 +3,9 @@ import { getJob } from '@/lib/jobs'
 import { getSessionStatus } from '@/lib/devin'
 import type { SSEMessage } from '@/types/jobs'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/jobs/[id]/stream
  *
@@ -10,9 +13,9 @@ import type { SSEMessage } from '@/types/jobs'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const jobId = params.id
+  const { id: jobId } = await params
 
   // Get job
   const job = getJob(jobId)

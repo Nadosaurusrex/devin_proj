@@ -1,5 +1,4 @@
 import type {
-  CreateSessionRequest,
   CreateSessionResponse,
   SessionStatusResponse,
   AnalyzeSessionParams,
@@ -182,8 +181,20 @@ class MockDevinSession {
   }
 }
 
-// Store mock sessions
-const mockSessions = new Map<string, MockDevinSession>()
+/**
+ * Global mock sessions storage for singleton pattern
+ */
+declare global {
+  // eslint-disable-next-line no-var
+  var devinMockSessions: Map<string, MockDevinSession | MockDevinRemovalSession> | undefined
+}
+
+// Store mock sessions (both analyze and removal sessions) using global
+const mockSessions = globalThis.devinMockSessions ?? new Map<string, MockDevinSession | MockDevinRemovalSession>()
+
+if (!globalThis.devinMockSessions) {
+  globalThis.devinMockSessions = mockSessions
+}
 
 /**
  * Create an analyze session with Devin
@@ -544,8 +555,7 @@ class MockDevinRemovalSession {
   }
 }
 
-// Store mock removal sessions
-const mockRemovalSessions = new Map<string, MockDevinRemovalSession>()
+// Note: Mock removal sessions are stored in the main mockSessions Map above
 
 /**
  * Create a removal session with Devin
@@ -557,8 +567,7 @@ export async function createRemoveSession(
     console.log('[MOCK] Creating mock Devin removal session')
     const mockSession = new MockDevinRemovalSession(params)
     const sessionId = mockSession.getSessionId()
-    mockRemovalSessions.set(sessionId, mockSession)
-    mockSessions.set(sessionId, mockSession as any) // Add to main mock sessions map for status polling
+    mockSessions.set(sessionId, mockSession) // Store in global mock sessions map
     return { sessionId }
   }
 

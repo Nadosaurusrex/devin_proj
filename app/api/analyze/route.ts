@@ -5,6 +5,9 @@ import type { CreateJobResponse } from '@/types/jobs'
 import type { ErrorResponse } from '@/types/flags'
 import type { AnalyzeSessionParams } from '@/types/devin'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/analyze
  *

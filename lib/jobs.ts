@@ -2,10 +2,22 @@ import type { Job, JobStatus, JobType, LogEntry } from '@/types/jobs'
 import type { AnalysisResult } from '@/types/devin'
 
 /**
- * In-memory job storage
+ * In-memory job storage using global object for singleton pattern
+ * This ensures a single Map instance across all Next.js API route instances
  * In production, this would be replaced with a database
  */
-const jobs = new Map<string, Job>()
+declare global {
+  // eslint-disable-next-line no-var
+  var jobsMap: Map<string, Job> | undefined
+}
+
+// Initialize or reuse existing Map from global
+const jobs = globalThis.jobsMap ?? new Map<string, Job>()
+
+// Store in global for reuse
+if (!globalThis.jobsMap) {
+  globalThis.jobsMap = jobs
+}
 
 /**
  * Generate unique job ID
