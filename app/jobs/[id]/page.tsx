@@ -270,7 +270,7 @@ export default function JobPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className="mb-3">
+                    <Card className="mb-3" style={{ padding: '1.5rem' }}>
                       <div className="flex justify-content-between align-items-start mb-3">
                         <div className="flex align-items-center gap-2">
                           <i className="pi pi-flag text-2xl text-blue-600"></i>
@@ -295,7 +295,7 @@ export default function JobPage() {
                       {flag.affected_files.length > 0 && (
                         <div>
                           <strong className="mb-2 block">Affected Files:</strong>
-                          <ul className="list-disc list-inside text-sm font-mono">
+                          <ul className="list-disc list-inside text-sm font-mono m-0">
                             {flag.affected_files.slice(0, 5).map((file, idx) => (
                               <li key={idx} className="text-gray-700">{file}</li>
                             ))}
@@ -314,28 +314,28 @@ export default function JobPage() {
             {isRemovalResult(result) && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <Card className="bg-green-50">
+                  <Card className="bg-green-50" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
                       <i className="pi pi-check text-3xl text-green-600 mb-2"></i>
                       <div className="text-3xl font-bold text-green-700">{result.summary.flags_removed}</div>
                       <div className="text-sm text-gray-600">Flags Removed</div>
                     </div>
                   </Card>
-                  <Card className="bg-blue-50">
+                  <Card className="bg-blue-50" style={{ padding: '1.5rem' }}>
                     <div className="text-center">
                       <i className="pi pi-file text-3xl text-blue-600 mb-2"></i>
                       <div className="text-3xl font-bold text-blue-700">{result.summary.files_modified}</div>
                       <div className="text-sm text-gray-600">Files Modified</div>
                     </div>
                   </Card>
-                  <Card className={result.summary.tests_passed ? 'bg-green-50' : 'bg-red-50'}>
+                  <Card className={result.summary.tests_passed ? 'bg-green-50' : 'bg-red-50'} style={{ padding: '1.5rem' }}>
                     <div className="text-center">
                       <i className={`pi ${result.summary.tests_passed ? 'pi-check-circle' : 'pi-times-circle'} text-3xl ${result.summary.tests_passed ? 'text-green-600' : 'text-red-600'} mb-2`}></i>
                       <div className="text-3xl font-bold">{result.summary.tests_passed ? '✓' : '✗'}</div>
                       <div className="text-sm text-gray-600">Tests</div>
                     </div>
                   </Card>
-                  <Card className={result.summary.build_passed ? 'bg-green-50' : 'bg-red-50'}>
+                  <Card className={result.summary.build_passed ? 'bg-green-50' : 'bg-red-50'} style={{ padding: '1.5rem' }}>
                     <div className="text-center">
                       <i className={`pi ${result.summary.build_passed ? 'pi-check-circle' : 'pi-times-circle'} text-3xl ${result.summary.build_passed ? 'text-green-600' : 'text-red-600'} mb-2`}></i>
                       <div className="text-3xl font-bold">{result.summary.build_passed ? '✓' : '✗'}</div>
@@ -345,7 +345,7 @@ export default function JobPage() {
                 </div>
 
                 {result.pr_url && (
-                  <Card className="bg-blue-50 border-blue-200">
+                  <Card className="bg-blue-50 border-blue-200" style={{ padding: '1.5rem' }}>
                     <div className="flex align-items-center gap-3 mb-3">
                       <i className="pi pi-github text-3xl text-blue-600"></i>
                       <div>
@@ -390,12 +390,12 @@ export default function JobPage() {
                 )}
 
                 {result.errors && result.errors.length > 0 && (
-                  <Card className="bg-yellow-50 border-yellow-200">
+                  <Card className="bg-yellow-50 border-yellow-200" style={{ padding: '1.5rem' }}>
                     <h3 className="text-lg font-semibold mb-2 flex align-items-center gap-2">
                       <i className="pi pi-exclamation-triangle text-yellow-600"></i>
                       Warnings
                     </h3>
-                    <ul className="text-sm space-y-1">
+                    <ul className="text-sm space-y-1 m-0">
                       {result.errors.map((err, idx) => (
                         <li key={idx} className="flex align-items-start gap-2">
                           <i className="pi pi-circle-fill text-xs text-yellow-600 mt-1"></i>
@@ -412,10 +412,10 @@ export default function JobPage() {
       )}
 
       {!result && isComplete && (
-        <Card className="text-center py-6">
+        <Card style={{ padding: '1.5rem' }} className="text-center">
           <i className="pi pi-info-circle text-5xl text-gray-400 mb-3"></i>
-          <h3 className="text-xl font-semibold text-gray-600">Job Completed</h3>
-          <p className="text-gray-500">No result was returned from the job.</p>
+          <h3 className="text-xl font-semibold text-gray-600 m-0 mb-2">Job Completed</h3>
+          <p className="text-gray-500 m-0">No result was returned from the job.</p>
         </Card>
       )}
     </motion.div>
