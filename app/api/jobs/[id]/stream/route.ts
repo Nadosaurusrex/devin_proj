@@ -32,6 +32,7 @@ export async function GET(
   // Create SSE stream
   const encoder = new TextEncoder()
   let lastLogIndex = 0
+  let lastDevinOutputLength = 0
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -76,9 +77,10 @@ export async function GET(
             try {
               const sessionStatus = await getSessionStatus(currentJob.devinSessionId)
 
-              // Parse output for new logs
-              if (sessionStatus.output) {
-                const outputLines = sessionStatus.output.split('\n')
+              // Parse output for new logs (only send new output since last check)
+              if (sessionStatus.output && sessionStatus.output.length > lastDevinOutputLength) {
+                const newOutput = sessionStatus.output.substring(lastDevinOutputLength)
+                const outputLines = newOutput.split('\n')
                 for (const line of outputLines) {
                   if (line.trim()) {
                     sendMessage({
@@ -92,6 +94,7 @@ export async function GET(
                     })
                   }
                 }
+                lastDevinOutputLength = sessionStatus.output.length
               }
 
               // Check if completed
