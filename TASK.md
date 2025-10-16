@@ -100,4 +100,77 @@ Implement GET /api/flags to read a registry file from a GitHub repository and pa
 - [ ] Document API in README or separate API.md
 
 ## Status
+✅ COMPLETED - All tests passing, API verified
+
+---
+
+# Task: Analyze Flow - Devin Integration & SSE
+
+## Goal
+Implement POST /api/analyze to create Devin analysis sessions and GET /api/jobs/[id]/stream for real-time log streaming via SSE.
+
+## Requirements
+- [ ] Create `types/devin.ts` with Devin API types
+- [ ] Create `types/jobs.ts` with job state types
+- [ ] Create `lib/devin.ts` with Devin client
+  - `createAnalyzeSession()` - create analyze-only session
+  - `getSessionStatus()` - poll session status
+  - `streamSessionLogs()` - get incremental logs
+  - Mock mode toggle via `DEVIN_MOCK_MODE` env var
+- [ ] Create `lib/jobs.ts` for in-memory job storage
+  - Store job state (id, status, logs, results)
+  - Retrieve job by id
+- [ ] Create `app/api/analyze/route.ts` as POST endpoint
+  - Input: owner, repo, branch, flags[], workingDir?, patterns?
+  - Create Devin session with "analyze only" instructions
+  - Return jobId and streamUrl
+- [ ] Create `app/api/jobs/[id]/stream/route.ts` as GET endpoint
+  - SSE (Server-Sent Events) endpoint
+  - Stream logs incrementally
+  - Send final results when complete
+- [ ] Add mock Devin implementation
+  - Generate fake reference counts
+  - Simulate affected files
+  - Provide risk/confidence scores
+
+## Constraints
+- **No writes** to repo in analyze mode
+- **Structure JSON output** for easy parsing
+- **Mock by default** - toggle with env var
+- In-memory storage only (no DB in MVP)
+
+## Implementation Plan
+
+### Phase 1: Types
+1. Define Devin API request/response types
+2. Define Job state types
+3. Define analyze session parameters
+
+### Phase 2: Devin Client
+1. Create lib/devin.ts with real API client
+2. Add mock implementation
+3. Toggle based on env var
+
+### Phase 3: Job Storage
+1. In-memory Map for jobs
+2. CRUD operations for jobs
+3. Log accumulation logic
+
+### Phase 4: API Routes
+1. POST /api/analyze - initiate analysis
+2. GET /api/jobs/[id]/stream - SSE streaming
+
+### Phase 5: Testing
+- [ ] Test mock mode with sample flags
+- [ ] Verify SSE streaming works
+- [ ] Test error handling
+- [ ] Manual E2E test via curl/browser
+
+## After Implementation
+- [ ] Typecheck clean
+- [ ] Tests passing
+- [ ] Mock mode works end-to-end
+- [ ] SSE streams correctly
+
+## Status
 🚧 IN PROGRESS
