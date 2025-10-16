@@ -270,24 +270,3 @@ body {
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
-
-/* Easter egg hidden character */
-.easter-egg-mascot {
-  position: fixed;
-  bottom: -100px;
-  right: 20px;
-  width: 80px;
-  height: 80px;
-  transition: bottom 0.5s ease-out;
-  z-index: 9999;
-  cursor: pointer;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.easter-egg-mascot.show {
-  bottom: 20px;
-}
-
-.easter-egg-mascot:hover {
-  animation: wiggle 0.5s ease-in-out;
-}

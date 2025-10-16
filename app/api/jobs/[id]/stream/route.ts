@@ -33,6 +33,10 @@ export async function GET(
   const encoder = new TextEncoder()
   let lastLogIndex = 0
   let lastDevinOutputLength = 0
+  let completionSent = false
+  let resultSent = false
+  let completionTime: number | null = null
+  const POST_COMPLETION_POLL_DURATION = 10000 // Continue polling for 10 seconds after completion
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -72,8 +76,8 @@ export async function GET(
             lastLogIndex = currentJob.logs.length
           }
 
-          // Check Devin session status if running
-          if (currentJob.devinSessionId && currentJob.status === 'running') {
+          // Check Devin session status if session exists
+          if (currentJob.devinSessionId && (currentJob.status === 'running' || (completionTime && Date.now() - completionTime < POST_COMPLETION_POLL_DURATION))) {
             try {
               const sessionStatus = await getSessionStatus(currentJob.devinSessionId)
 
@@ -97,11 +101,10 @@ export async function GET(
                 lastDevinOutputLength = sessionStatus.output.length
               }
 
-              // Check if completed
-              if (sessionStatus.status === 'completed' && sessionStatus.result) {
+              // Check if result is available and hasn't been sent yet
+              if (sessionStatus.result && !resultSent) {
                 // Save result to job storage
                 setJobResult(jobId, sessionStatus.result)
-                updateJobStatus(jobId, 'completed')
 
                 sendMessage({
                   type: 'result',
@@ -109,25 +112,54 @@ export async function GET(
                   timestamp: new Date().toISOString(),
                 })
 
+                resultSent = true
+                console.log(`[Stream ${jobId}] Result sent successfully`)
+              }
+
+              // Check if completed - decouple from result availability
+              if (sessionStatus.status === 'completed' && !completionSent) {
+                // Update job status immediately
+                updateJobStatus(jobId, 'completed')
+
+                // Mark completion time to continue polling for result
+                completionTime = Date.now()
+
+                // Send complete message even if result not found yet
                 sendMessage({
                   type: 'complete',
                   data: { status: 'completed' },
                   timestamp: new Date().toISOString(),
                 })
 
-                clearInterval(pollInterval)
-                controller.close()
-                return
+                completionSent = true
+                console.log(`[Stream ${jobId}] Completion sent, will continue polling for result`)
+
+                // If result was already found, we can close now
+                if (resultSent) {
+                  console.log(`[Stream ${jobId}] Result already sent, closing stream`)
+                  clearInterval(pollInterval)
+                  controller.close()
+                  return
+                }
               }
 
               // Check if failed
-              if (sessionStatus.status === 'failed') {
+              if (sessionStatus.status === 'failed' && !completionSent) {
+                updateJobStatus(jobId, 'failed')
+
                 sendMessage({
                   type: 'error',
                   data: { error: sessionStatus.error || 'Session failed' },
                   timestamp: new Date().toISOString(),
                 })
 
+                sendMessage({
+                  type: 'complete',
+                  data: { status: 'failed' },
+                  timestamp: new Date().toISOString(),
+                })
+
+                completionSent = true
                 clearInterval(pollInterval)
                 controller.close()
                 return
@@ -146,6 +178,16 @@ export async function GET(
             }
           }
 
+          // Check if we should stop post-completion polling
+          if (completionSent && completionTime && Date.now() - completionTime >= POST_COMPLETION_POLL_DURATION) {
+            if (!resultSent) {
+              console.warn(`[Stream ${jobId}] Closing stream after ${POST_COMPLETION_POLL_DURATION}ms - no result found`)
+            }
+            clearInterval(pollInterval)
+            controller.close()
+            return
+          }
+
           // Send status update
           sendMessage({
             type: 'status',
@@ -153,14 +195,15 @@ export async function GET(
             timestamp: new Date().toISOString(),
           })
 
-          // If job is completed or failed, close stream
-          if (currentJob.status === 'completed' || currentJob.status === 'failed') {
-            if (currentJob.result) {
+          // If job is completed or failed without Devin session, close stream
+          if (!currentJob.devinSessionId && (currentJob.status === 'completed' || currentJob.status === 'failed')) {
+            if (currentJob.result && !resultSent) {
               sendMessage({
                 type: 'result',
                 data: currentJob.result,
                 timestamp: new Date().toISOString(),
               })
+              resultSent = true
             }
 
             if (currentJob.error) {
@@ -171,11 +214,14 @@ export async function GET(
               })
             }
 
-            sendMessage({
-              type: 'complete',
-              data: { status: currentJob.status },
-              timestamp: new Date().toISOString(),
-            })
+            if (!completionSent) {
+              sendMessage({
+                type: 'complete',
+                data: { status: currentJob.status },
+                timestamp: new Date().toISOString(),
+              })
+              completionSent = true
+            }
 
             clearInterval(pollInterval)
             controller.close()

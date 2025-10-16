@@ -1,5 +1,5 @@
 import type { Job, JobStatus, JobType, LogEntry } from '@/types/jobs'
-import type { AnalysisResult } from '@/types/devin'
+import type { AnalysisResult, RemovalResult } from '@/types/devin'
 
 /**
  * In-memory job storage using global object for singleton pattern
@@ -115,7 +115,7 @@ export function addJobLog(
 /**
  * Set job result
  */
-export function setJobResult(id: string, result: AnalysisResult): void {
+export function setJobResult(id: string, result: AnalysisResult | RemovalResult): void {
   const job = jobs.get(id)
   if (!job) {
     throw new Error(`Job not found: ${id}`)

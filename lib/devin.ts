@@ -296,7 +296,7 @@ export async function getSessionStatus(
   try {
     // Create abort controller for timeout
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 100000) // 30 second timeout
 
     const response = await fetch(`${DEVIN_API_BASE}/sessions/${sessionId}`, {
       headers: {
@@ -318,8 +318,8 @@ export async function getSessionStatus(
 
     // Transform real API response to our format
     const messages = data.messages || []
-    const output = messages
-      .filter((m: { type: string }) => m.type === 'devin_message')
+    const devinMessages = messages.filter((m: { type: string }) => m.type === 'devin_message')
+    const output = devinMessages
       .map((m: { message: string }) => m.message)
       .join('\n')
 
@@ -332,52 +332,134 @@ export async function getSessionStatus(
       'cancelled': 'cancelled',
     }
 
-    // Try to extract structured result
+    const mappedStatus = statusMap[data.status_enum] || 'running'
+
+    // Try to extract structured result - attempt this regardless of status
     let result: AnalysisResult | RemovalResult | undefined = data.structured_output
 
-    // If no structured output, try to fetch from attachments
-    if (!result && data.attachments && data.attachments.length > 0 && statusMap[data.status_enum] === 'completed') {
+    // If no structured output, try to fetch from attachments (try even if not completed yet)
+    if (!result && data.attachments && data.attachments.length > 0) {
       try {
         // Look for JSON attachment
         const jsonAttachment = data.attachments.find((att: { name: string; url: string }) =>
           att.name?.endsWith('.json')
         )
         if (jsonAttachment && jsonAttachment.url) {
-          console.log('Fetching Devin attachment from:', jsonAttachment.url)
+          console.log('[Devin] Fetching attachment from:', jsonAttachment.url)
           const attachmentResponse = await fetch(jsonAttachment.url)
           if (attachmentResponse.ok) {
             result = await attachmentResponse.json()
-            console.log('Successfully fetched Devin result from attachment')
+            console.log('[Devin] Successfully fetched result from attachment')
           }
         }
       } catch (e) {
-        console.error('Failed to fetch attachment from Devin:', e)
+        console.error('[Devin] Failed to fetch attachment:', e)
       }
     }
 
     // If still no result, try to extract JSON from the output text
-    if (!result && output && statusMap[data.status_enum] === 'completed') {
+    // Try this even if status is still 'running' in case result comes early
+    if (!result && output) {
       try {
-        // Look for JSON in code blocks (```json ... ```)
+        // Method 1: Look for JSON in code blocks (```json ... ```)
         const jsonMatch = output.match(/```json\s*([\s\S]*?)\s*```/)
         if (jsonMatch) {
+          console.log('[Devin] Found JSON in code block, attempting to parse...')
           result = JSON.parse(jsonMatch[1])
-        } else {
-          // Try to find JSON object in the text
-          const objectMatch = output.match(/\{[\s\S]*"flags"[\s\S]*\}/)
-          if (objectMatch) {
-            result = JSON.parse(objectMatch[0])
-          }
+          console.log('[Devin] Successfully parsed result from code block')
         }
       } catch (e) {
-        // Failed to parse JSON from output, will remain undefined
-        console.warn('Failed to parse JSON from Devin output:', e)
+        console.warn('[Devin] Failed to parse JSON from code block:', e)
       }
+
+      // Method 2: Try to find JSON object with "flags" key (analysis result)
+      if (!result) {
+        try {
+          const flagsMatch = output.match(/\{[\s\S]*?"flags"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/)
+          if (flagsMatch) {
+            console.log('[Devin] Found potential analysis result JSON, attempting to parse...')
+            // Try to find the complete JSON object by balancing braces
+            const startIdx = flagsMatch.index || 0
+            let braceCount = 0
+            let jsonEnd = startIdx
+            for (let i = startIdx; i < output.length; i++) {
+              if (output[i] === '{') braceCount++
+              if (output[i] === '}') braceCount--
+              if (braceCount === 0 && output[i] === '}') {
+                jsonEnd = i + 1
+                break
+              }
+            }
+            const jsonStr = output.substring(startIdx, jsonEnd)
+            result = JSON.parse(jsonStr)
+            console.log('[Devin] Successfully parsed analysis result from text')
+          }
+        } catch (e) {
+          console.warn('[Devin] Failed to parse analysis result from text:', e)
+        }
+      }
+
+      // Method 3: Try to find JSON object with "summary" key (removal result)
+      if (!result) {
+        try {
+          const summaryMatch = output.match(/\{[\s\S]*?"summary"\s*:\s*\{[\s\S]*?"flags_removed"[\s\S]*?\}/)
+          if (summaryMatch) {
+            console.log('[Devin] Found potential removal result JSON, attempting to parse...')
+            // Try to find the complete JSON object by balancing braces
+            const startIdx = summaryMatch.index || 0
+            let braceCount = 0
+            let jsonEnd = startIdx
+            for (let i = startIdx; i < output.length; i++) {
+              if (output[i] === '{') braceCount++
+              if (output[i] === '}') braceCount--
+              if (braceCount === 0 && output[i] === '}') {
+                jsonEnd = i + 1
+                break
+              }
+            }
+            const jsonStr = output.substring(startIdx, jsonEnd)
+            result = JSON.parse(jsonStr)
+            console.log('[Devin] Successfully parsed removal result from text')
+          }
+        } catch (e) {
+          console.warn('[Devin] Failed to parse removal result from text:', e)
+        }
+      }
+
+      // Method 4: Try parsing individual recent messages for JSON
+      if (!result && devinMessages.length > 0) {
+        // Check the last few messages for JSON
+        const recentMessages = devinMessages.slice(-5)
+        for (const msg of recentMessages) {
+          try {
+            const msgText = msg.message || ''
+            // Try to find any JSON object in this specific message
+            const jsonMatch = msgText.match(/\{[\s\S]*?\}/)
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0])
+              // Validate it looks like our result types
+              if (parsed.flags || parsed.summary) {
+                result = parsed
+                console.log('[Devin] Successfully parsed result from individual message')
+                break
+              }
+            }
+          } catch {
+            // Skip this message, try next
+          }
+        }
+      }
+    }
+
+    if (!result && mappedStatus === 'completed') {
+      console.warn('[Devin] Session completed but no result could be extracted')
+      console.warn('[Devin] Attachments:', data.attachments?.length || 0)
+      console.warn('[Devin] Output length:', output.length)
     }
 
     return {
       session_id: data.session_id,
-      status: statusMap[data.status_enum] || 'running',
+      status: mappedStatus,
       output,
       result,
     } as SessionStatusResponse

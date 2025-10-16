@@ -12,42 +12,6 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [konamiProgress, setKonamiProgress] = useState(0)
-  const [showMascot, setShowMascot] = useState(false)
-  const [clickCount, setClickCount] = useState(0)
-
-  const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
-
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === konamiCode[konamiProgress]) {
-        const newProgress = konamiProgress + 1
-        setKonamiProgress(newProgress)
-
-        if (newProgress === konamiCode.length) {
-          setShowMascot(true)
-          setKonamiProgress(0)
-          setTimeout(() => setShowMascot(false), 10000)
-        }
-      } else {
-        setKonamiProgress(0)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [konamiProgress])
-
-  const handleMascotClick = () => {
-    setClickCount(prev => {
-      const newCount = prev + 1
-      if (newCount === 5) {
-        alert('🎉 You found the secret! Here\'s a fun fact: This dashboard can handle thousands of feature flags!')
-        return 0
-      }
-      return newCount
-    })
-  }
 
   const isActive = (path: string) => {
     return pathname === path ? 'bg-blue-700' : ''
@@ -111,31 +75,6 @@ export default function RootLayout({
             <main className="flex-1 container mx-auto px-6 py-8">
               {children}
             </main>
-
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-4 mt-auto">
-              <div className="container mx-auto px-4 text-center">
-                <p className="text-sm">
-                  <i className="pi pi-bolt mr-2"></i>
-                  Powered by Devin AI & PrimeReact
-                  <span className="ml-3 text-gray-400">|</span>
-                  <span className="ml-3 text-gray-400 cursor-pointer hover:text-white" title="Try the Konami code!">
-                    🎮 Easter eggs hidden
-                  </span>
-                </p>
-              </div>
-            </footer>
-
-            {/* Easter Egg Mascot */}
-            <div
-              className={`easter-egg-mascot ${showMascot ? 'show' : ''}`}
-              onClick={handleMascotClick}
-              title="Click me 5 times!"
-            >
-              <div className="text-6xl float-animation">
-                🚩
-              </div>
-            </div>
           </div>
         </PrimeReactProvider>
       </body>
