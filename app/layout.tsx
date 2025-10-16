@@ -1,10 +1,8 @@
 'use client'
 
-import type { Metadata } from 'next'
 import './globals.css'
 import { PrimeReactProvider } from 'primereact/api'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
 
 export default function RootLayout({
   children,

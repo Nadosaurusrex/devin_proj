@@ -214,7 +214,7 @@ export default function ConnectPage() {
                   className="w-full"
                 />
               </div>
-              <small className="text-gray-500">Usually 'master' or 'main'</small>
+              <small className="text-gray-500">Usually &apos;master&apos; or &apos;main&apos;</small>
             </div>
 
             <div>

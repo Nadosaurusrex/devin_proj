@@ -85,7 +85,7 @@ export function FlagsTable({ flags, loading, onAnalyze, onRemove }: FlagsTablePr
     const now = new Date()
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
 
-    let dateDisplay = date.toLocaleDateString()
+    const dateDisplay = date.toLocaleDateString()
     let timeAgo = ''
 
     if (diffDays === 0) {
