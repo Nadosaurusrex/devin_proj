@@ -33,20 +33,22 @@ lint:
 format:
   @echo "Format task placeholder - add prettier if needed"
 
-# Run tests (placeholder)
+# Run tests
 test:
-  @echo "Test task placeholder - add vitest or jest if needed"
+  pnpm vitest run
 
 # Seed sample data (placeholder)
 seed:
   @echo "Seed task placeholder - no DB in MVP"
 
-# Run all checks (typecheck + lint)
+# Run all checks (typecheck + lint + tests)
 check:
   @echo "Running typecheck..."
   @just typecheck
   @echo "Running lint..."
   @just lint
+  @echo "Running tests..."
+  @just test
   @echo "All checks passed!"
 
 # Clean build artifacts

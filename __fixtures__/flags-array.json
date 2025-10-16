@@ -1,0 +1,12 @@
+[
+  {
+    "key": "feature_a",
+    "state": "enabled",
+    "description": "Feature A"
+  },
+  {
+    "key": "feature_b",
+    "state": "disabled",
+    "description": "Feature B"
+  }
+]
