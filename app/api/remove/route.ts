@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRemoveSession, isMockMode } from '@/lib/devin'
-import { createJob, setJobDevinSession, addJobLog, updateJobStatus } from '@/lib/jobs'
-import type { CreateJobResponse } from '@/types/jobs'
 import type { ErrorResponse } from '@/types/flags'
 import type { RemoveSessionParams } from '@/types/devin'
 
@@ -71,30 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 })
     }
 
-    // Create job
-    const job = createJob('remove', {
-      owner,
-      repo,
-      branch,
-      flags,
-    })
-
-    addJobLog(
-      job.id,
-      'info',
-      `Starting removal of ${flags.length} flag(s) in ${owner}/${repo} (inline as "${targetBehavior}")`
-    )
-    addJobLog(job.id, 'info', isMockMode() ? 'Running in MOCK mode' : 'Using Devin API')
-    addJobLog(job.id, 'info', `Registry files to update: ${registryFiles.join(', ')}`)
-
-    if (testCommand) {
-      addJobLog(job.id, 'info', `Will run tests: ${testCommand}`)
-    }
-    if (buildCommand) {
-      addJobLog(job.id, 'info', `Will run build: ${buildCommand}`)
-    }
-
-    // Create Devin session asynchronously
+    // Create Devin session (stateless - no job storage needed)
     const params: RemoveSessionParams = {
       owner,
       repo,
@@ -107,26 +82,26 @@ export async function POST(request: NextRequest) {
       workingDir,
     }
 
-    // Start session in background
-    createRemoveSession(params)
-      .then(({ sessionId }) => {
-        setJobDevinSession(job.id, sessionId)
-        updateJobStatus(job.id, 'running')
-        addJobLog(job.id, 'info', `Created Devin removal session: ${sessionId}`)
-      })
-      .catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown error'
-        addJobLog(job.id, 'error', `Failed to create Devin session: ${message}`)
-        updateJobStatus(job.id, 'failed')
-      })
+    try {
+      const { sessionId } = await createRemoveSession(params)
 
-    // Return job ID and stream URL
-    const response: CreateJobResponse = {
-      jobId: job.id,
-      streamUrl: `/api/jobs/${job.id}/stream`,
+      // Return Devin session ID directly (no job storage)
+      const response = {
+        sessionId,
+        pollUrl: `/api/sessions/${sessionId}`,
+        mode: isMockMode() ? 'mock' : 'live',
+      }
+
+      return NextResponse.json(response, { status: 201 })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      const errorResponse: ErrorResponse = {
+        error: 'SESSION_CREATE_FAILED',
+        message: `Failed to create Devin removal session: ${message}`,
+        statusCode: 500
+      }
+      return NextResponse.json(errorResponse, { status: 500 })
     }
-
-    return NextResponse.json(response, { status: 201 })
 
   } catch (error) {
     const errorResponse: ErrorResponse = {

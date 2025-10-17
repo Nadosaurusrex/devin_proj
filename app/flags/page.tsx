@@ -142,7 +142,7 @@ export default function FlagsPage() {
       })
 
       setTimeout(() => {
-        router.push(`/jobs/${data.jobId}`)
+        router.push(`/jobs/${data.sessionId}`)
       }, 500)
     } catch (err) {
       toast.current?.show({
@@ -192,7 +192,7 @@ export default function FlagsPage() {
       })
 
       setTimeout(() => {
-        router.push(`/jobs/${data.jobId}`)
+        router.push(`/jobs/${data.sessionId}`)
       }, 500)
     } catch (err) {
       toast.current?.show({

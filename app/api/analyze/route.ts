@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAnalyzeSession, isMockMode } from '@/lib/devin'
-import { createJob, setJobDevinSession, addJobLog, updateJobStatus } from '@/lib/jobs'
-import type { CreateJobResponse } from '@/types/jobs'
 import type { ErrorResponse } from '@/types/flags'
 import type { AnalyzeSessionParams } from '@/types/devin'
 
@@ -44,18 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 })
     }
 
-    // Create job
-    const job = createJob('analyze', {
-      owner,
-      repo,
-      branch,
-      flags,
-    })
-
-    addJobLog(job.id, 'info', `Starting analysis for ${flags.length} flag(s) in ${owner}/${repo}`)
-    addJobLog(job.id, 'info', isMockMode() ? 'Running in MOCK mode' : 'Using Devin API')
-
-    // Create Devin session asynchronously
+    // Create Devin session (stateless - no job storage needed)
     const params: AnalyzeSessionParams = {
       owner,
       repo,
@@ -65,26 +52,26 @@ export async function POST(request: NextRequest) {
       patterns,
     }
 
-    // Start session in background
-    createAnalyzeSession(params)
-      .then(({ sessionId }) => {
-        setJobDevinSession(job.id, sessionId)
-        updateJobStatus(job.id, 'running')
-        addJobLog(job.id, 'info', `Created Devin session: ${sessionId}`)
-      })
-      .catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown error'
-        addJobLog(job.id, 'error', `Failed to create Devin session: ${message}`)
-        updateJobStatus(job.id, 'failed')
-      })
+    try {
+      const { sessionId } = await createAnalyzeSession(params)
 
-    // Return job ID and stream URL
-    const response: CreateJobResponse = {
-      jobId: job.id,
-      streamUrl: `/api/jobs/${job.id}/stream`,
+      // Return Devin session ID directly (no job storage)
+      const response = {
+        sessionId,
+        pollUrl: `/api/sessions/${sessionId}`,
+        mode: isMockMode() ? 'mock' : 'live',
+      }
+
+      return NextResponse.json(response, { status: 201 })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      const errorResponse: ErrorResponse = {
+        error: 'SESSION_CREATE_FAILED',
+        message: `Failed to create Devin session: ${message}`,
+        statusCode: 500
+      }
+      return NextResponse.json(errorResponse, { status: 500 })
     }
-
-    return NextResponse.json(response, { status: 201 })
 
   } catch (error) {
     const errorResponse: ErrorResponse = {

@@ -15,7 +15,7 @@ import type { AnalysisResult, RemovalResult } from '@/types/devin'
 export default function JobPage() {
   const params = useParams()
   const router = useRouter()
-  const jobId = params.id as string
+  const sessionId = params.id as string
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [status, setStatus] = useState<JobStatus>('pending')
   const [result, setResult] = useState<AnalysisResult | RemovalResult | null>(null)
@@ -23,22 +23,22 @@ export default function JobPage() {
   const [isComplete, setIsComplete] = useState(false)
   const logsEndRef = useRef<HTMLDivElement>(null)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const lastDevinOutputLengthRef = useRef<number>(0)
+  const lastOutputLengthRef = useRef<number>(0)
 
   // Auto-scroll to bottom
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
 
-  // Client-side polling (Vercel-compatible)
+  // Client-side polling of Devin session (Vercel-compatible, stateless)
   useEffect(() => {
     let isMounted = true
 
-    const pollJobStatus = async () => {
+    const pollSessionStatus = async () => {
       try {
-        const response = await fetch(`/api/jobs/${jobId}`)
+        const response = await fetch(`/api/sessions/${sessionId}`)
         if (!response.ok) {
-          throw new Error(`Failed to fetch job status: ${response.statusText}`)
+          throw new Error(`Failed to fetch session status: ${response.statusText}`)
         }
 
         const data = await response.json()
@@ -46,18 +46,13 @@ export default function JobPage() {
         if (!isMounted) return
 
         // Update status
-        setStatus(data.status)
+        setStatus(data.status || 'running')
 
-        // Update logs from job storage
-        if (data.logs && Array.isArray(data.logs)) {
-          setLogs(data.logs)
-        }
-
-        // Parse Devin output for new logs
-        if (data.devinOutput && typeof data.devinOutput === 'string') {
+        // Parse Devin output for logs (incremental)
+        if (data.output && typeof data.output === 'string') {
           // Only process new output since last check
-          if (data.devinOutput.length > lastDevinOutputLengthRef.current) {
-            const newOutput = data.devinOutput.substring(lastDevinOutputLengthRef.current)
+          if (data.output.length > lastOutputLengthRef.current) {
+            const newOutput = data.output.substring(lastOutputLengthRef.current)
             const outputLines = newOutput.split('\n')
 
             const newLogs: LogEntry[] = []
@@ -75,7 +70,7 @@ export default function JobPage() {
               setLogs((prev) => [...prev, ...newLogs])
             }
 
-            lastDevinOutputLengthRef.current = data.devinOutput.length
+            lastOutputLengthRef.current = data.output.length
           }
         }
 
@@ -98,18 +93,18 @@ export default function JobPage() {
           }
         }
       } catch (err) {
-        console.error('Failed to poll job status:', err)
+        console.error('Failed to poll session status:', err)
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch job status')
+          setError(err instanceof Error ? err.message : 'Failed to fetch session status')
         }
       }
     }
 
     // Initial poll
-    pollJobStatus()
+    pollSessionStatus()
 
     // Poll every 1 second (client-side, not serverless)
-    pollIntervalRef.current = setInterval(pollJobStatus, 1000)
+    pollIntervalRef.current = setInterval(pollSessionStatus, 1000)
 
     return () => {
       isMounted = false
@@ -118,7 +113,7 @@ export default function JobPage() {
         pollIntervalRef.current = null
       }
     }
-  }, [jobId])
+  }, [sessionId])
 
   const getStatusSeverity = (status: JobStatus) => {
     switch (status) {
@@ -184,7 +179,7 @@ export default function JobPage() {
           </div>
           <p className="text-gray-600 flex align-items-center gap-2">
             <i className="pi pi-hashtag"></i>
-            <code className="font-mono text-sm">{jobId}</code>
+            <code className="font-mono text-sm">{sessionId}</code>
           </p>
         </div>
         <div className="flex gap-2 align-items-center">
