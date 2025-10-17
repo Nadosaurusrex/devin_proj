@@ -316,12 +316,31 @@ export async function getSessionStatus(
 
     const data = await response.json()
 
+    // Log for debugging
+    console.log(`[Devin ${sessionId}] Response:`, {
+      status: data.status,
+      status_enum: data.status_enum,
+      messages_count: data.messages?.length || 0,
+      message_types: data.messages?.map((m: { type: string }) => m.type) || []
+    })
+
     // Transform real API response to our format
     const messages = data.messages || []
-    const devinMessages = messages.filter((m: { type: string }) => m.type === 'devin_message')
-    const output = devinMessages
-      .map((m: { message: string }) => m.message)
+
+    // Include all message types that contain useful output
+    // Types: devin_message, user_message, system_message, tool_use, tool_result
+    const relevantMessages = messages.filter((m: { type: string; message?: string }) =>
+      m.message && m.message.trim().length > 0
+    )
+
+    const output = relevantMessages
+      .map((m: { message: string; type: string }) => {
+        const prefix = m.type === 'user_message' ? '[User]' : m.type === 'devin_message' ? '[Devin]' : `[${m.type}]`
+        return `${prefix} ${m.message}`
+      })
       .join('\n')
+
+    console.log(`[Devin ${sessionId}] Extracted ${relevantMessages.length} messages, output length: ${output.length}`)
 
     // Map Devin's status_enum to our status type
     const statusMap: Record<string, DevinSessionStatus> = {
@@ -427,9 +446,9 @@ export async function getSessionStatus(
       }
 
       // Method 4: Try parsing individual recent messages for JSON
-      if (!result && devinMessages.length > 0) {
+      if (!result && relevantMessages.length > 0) {
         // Check the last few messages for JSON
-        const recentMessages = devinMessages.slice(-5)
+        const recentMessages = relevantMessages.slice(-5)
         for (const msg of recentMessages) {
           try {
             const msgText = msg.message || ''
