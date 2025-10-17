@@ -8,6 +8,7 @@ import { RadioButton } from 'primereact/radiobutton'
 import { Chips } from 'primereact/chips'
 import { Message } from 'primereact/message'
 import { Divider } from 'primereact/divider'
+import { Card } from 'primereact/card'
 import type { Flag } from '@/types/flags'
 
 interface RemoveModalProps {
@@ -80,6 +81,48 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
       closable={!submitting}
       blockScroll
     >
+      <div className="p-5 pb-0">
+        <Card className="bg-gradient-to-r from-red-50 to-orange-50 mb-4" style={{ padding: '1rem' }}>
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-cog text-red-600 text-xl"></i>
+            <div className="flex-1 text-sm">
+              <strong className="block mb-2">Behind the Scenes:</strong>
+              <p className="text-slate-700 mb-2">
+                <strong>Devin AI</strong> will autonomously scan your codebase, remove all flag references,
+                inline the target behavior, update registry files, run tests/builds, and create a PR with a detailed summary.
+              </p>
+              <details className="cursor-pointer">
+                <summary className="text-red-600 hover:text-red-800 font-semibold select-none">
+                  View the instructions sent to Devin <i className="pi pi-angle-down text-xs ml-1"></i>
+                </summary>
+                <pre className="text-xs bg-slate-800 text-white p-3 rounded mt-2 overflow-x-auto max-h-64 overflow-y-auto">
+{`You are removing deprecated feature flags safely.
+
+Repository: ${repoConfig.owner}/${repoConfig.repo}
+Branch: ${repoConfig.branch}
+Flags to remove: [${flag?.key}]
+Target Behavior: Replace with "${flag?.state === 'enabled' ? 'on' : 'off'}"
+Registry Files: [${repoConfig.registryPath}]
+
+Steps:
+1. Scan codebase for all flag references
+2. Inline target behavior (true/false)
+3. Remove flags from registry files
+4. Update tests referencing these flags
+5. Run linter, tests, and build
+6. Create branch and commit changes
+7. Push to GitHub using GITHUB_TOKEN
+8. Open Pull Request with summary
+
+Output as structured JSON with pr_url.
+DO NOT leak GITHUB_TOKEN in logs.`}
+                </pre>
+              </details>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6 p-5">
         <Message
           severity="error"
@@ -103,12 +146,31 @@ export function RemoveModal({ flag, repoConfig, onClose, onSubmit }: RemoveModal
         />
 
         <Message
+          severity="info"
+          className="w-full"
+          content={
+            <div className="space-y-2">
+              <div>
+                <strong>What happens during removal:</strong>
+              </div>
+              <ul className="text-sm mt-2 mb-0 pl-4 space-y-1">
+                <li><i className="pi pi-search text-blue-600 mr-2"></i>Finds all flag references in the codebase</li>
+                <li><i className="pi pi-code text-purple-600 mr-2"></i>Inlines target behavior (replaces checks with true/false)</li>
+                <li><i className="pi pi-trash text-red-600 mr-2"></i>Updates registry files to remove flag definitions</li>
+                <li><i className="pi pi-check-square text-green-600 mr-2"></i>Runs tests and builds to ensure nothing breaks</li>
+                <li><i className="pi pi-github text-slate-700 mr-2"></i>Creates a PR with detailed change summary</li>
+              </ul>
+            </div>
+          }
+        />
+
+        <Message
           severity="warn"
           className="w-full"
           content={
             <div>
-              <strong>Warning:</strong> This will create a PR that removes the flag and inlines its behavior.
-              Make sure you have reviewed the analysis results first.
+              <strong>Important:</strong> This will create a PR that removes the flag and inlines its behavior.
+              Review the analysis results first. Typical completion time: 3-7 minutes.
             </div>
           }
         />

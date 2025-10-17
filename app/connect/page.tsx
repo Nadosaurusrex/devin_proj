@@ -198,12 +198,12 @@ export default function ConnectPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="branch" className="block text-sm font-medium mb-2">
-                <i className="pi pi-code-branch mr-2"></i>
+                <i className="pi pi-code mr-2"></i>
                 Branch
               </label>
               <div className="p-inputgroup">
                 <span className="p-inputgroup-addon">
-                  <i className="pi pi-git-branch"></i>
+                  <i className="pi pi-code"></i>
                 </span>
                 <InputText
                   id="branch"
@@ -234,6 +234,16 @@ export default function ConnectPage() {
                   required
                   className="w-full"
                 />
+                {owner && repo && registryPath && (
+                  <Button
+                    type="button"
+                    icon="pi pi-external-link"
+                    tooltip="View registry file on GitHub"
+                    tooltipOptions={{ position: 'top' }}
+                    outlined
+                    onClick={() => window.open(`https://github.com/${owner}/${repo}/blob/${branch}/${registryPath}`, '_blank')}
+                  />
+                )}
               </div>
               <small className="text-gray-500">Path to your flags registry file</small>
             </div>
@@ -264,14 +274,49 @@ export default function ConnectPage() {
         </form>
       </Card>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-4">
+        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200" style={{ padding: '1.5rem' }}>
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-info-circle text-purple-600 text-2xl flex-shrink-0"></i>
+            <div className="flex-1">
+              <strong className="text-purple-900 text-base block mb-2">Demo Information</strong>
+              <div className="text-slate-700 text-sm space-y-2">
+                <p className="mb-2">
+                  <i className="pi pi-star-fill text-yellow-500 mr-2"></i>
+                  The highlighted <strong>Nadosaurusrex/devin_proj</strong> repository contains pre-configured test data with sample feature flags, perfect for demonstrating the full workflow.
+                </p>
+                <p className="mb-2">
+                  <i className="pi pi-shield text-green-600 mr-2"></i>
+                  For demo convenience, the GitHub token is <strong>hardcoded</strong> with read-only access to this public repository. In production, you would use OAuth or secure environment variables.
+                </p>
+                <p className="mb-0">
+                  <i className="pi pi-book text-blue-600 mr-2"></i>
+                  The registry file contains a JSON structure with flag definitions (key, state, description).
+                  {owner && repo && registryPath && (
+                    <>
+                      {' '}<a
+                        href={`https://github.com/${owner}/${repo}/blob/${branch}/${registryPath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 font-semibold"
+                      >
+                        View the registry file <i className="pi pi-external-link text-xs"></i>
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <Card className="bg-blue-50 border-blue-200" style={{ padding: '1.25rem' }}>
           <div className="flex align-items-start gap-3">
-            <i className="pi pi-info-circle text-blue-600 text-2xl flex-shrink-0"></i>
+            <i className="pi pi-lightbulb text-yellow-600 text-2xl flex-shrink-0"></i>
             <div>
               <strong className="text-blue-900 text-base">Pro Tip:</strong>
               <p className="text-slate-700 text-sm mt-1 mb-0">
-                Make sure your GitHub token has <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">repo</code> scope to read the registry file.
+                To connect your own repository, ensure your GitHub token has <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">repo</code> scope to read the registry file.
               </p>
             </div>
           </div>

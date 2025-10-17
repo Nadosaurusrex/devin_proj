@@ -81,11 +81,20 @@ export default function JobPage() {
         }
 
         // Check if completed or failed
-        if (data.status === 'completed' || data.status === 'failed') {
-          setIsComplete(true)
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current)
-            pollIntervalRef.current = null
+        // Also detect completion if we have a PR URL (removal success) or analysis results
+        const hasResults = data.result && (
+          ('pr_url' in data.result && data.result.pr_url) || // Removal with PR
+          ('flags' in data.result && Array.isArray(data.result.flags)) // Analysis results
+        )
+
+        if (data.status === 'completed' || data.status === 'failed' || hasResults) {
+          if (!isComplete) {
+            setIsComplete(true)
+            setStatus(data.status === 'failed' ? 'failed' : 'completed')
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current)
+              pollIntervalRef.current = null
+            }
           }
         }
       } catch (err) {
@@ -109,6 +118,8 @@ export default function JobPage() {
         pollIntervalRef.current = null
       }
     }
+    // Note: isComplete is intentionally not in deps to avoid re-running the effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   const getStatusSeverity = (status: JobStatus) => {
@@ -199,8 +210,53 @@ export default function JobPage() {
         <Card>
           <div className="text-center">
             <i className="pi pi-spin pi-cog text-4xl text-blue-600 mb-3"></i>
-            <h3 className="text-xl font-semibold mb-2">Processing...</h3>
+            <h3 className="text-xl font-semibold mb-2">Devin AI is Working...</h3>
             <ProgressBar mode="indeterminate" style={{ height: '8px' }} />
+            <p className="text-sm text-gray-600 mt-3 mb-2">
+              Devin is autonomously analyzing your codebase. This process includes:
+            </p>
+            <div className="flex justify-content-center gap-4 mt-3 flex-wrap">
+              <div className="text-sm">
+                <i className="pi pi-search text-blue-600 mr-1"></i> Scanning files
+              </div>
+              <div className="text-sm">
+                <i className="pi pi-code text-purple-600 mr-1"></i> Analyzing references
+              </div>
+              <div className="text-sm">
+                <i className="pi pi-chart-bar text-orange-600 mr-1"></i> Calculating risk
+              </div>
+              <div className="text-sm">
+                <i className="pi pi-file-edit text-green-600 mr-1"></i> Generating report
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Educational Context Card */}
+      {status === 'running' && (
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200" style={{ padding: '1.5rem' }}>
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-info-circle text-blue-600 text-2xl flex-shrink-0"></i>
+            <div className="flex-1">
+              <strong className="text-blue-900 block mb-2">What&apos;s Happening Right Now:</strong>
+              <p className="text-slate-700 text-sm mb-3">
+                Devin is executing the instructions we sent (visible in the modal you just closed).
+                The live logs below show Devin&apos;s real-time progress as it explores your repository.
+              </p>
+              <details className="cursor-pointer text-sm">
+                <summary className="text-blue-600 hover:text-blue-800 font-semibold select-none">
+                  <i className="pi pi-book mr-1"></i> Learn more about the process
+                </summary>
+                <div className="mt-2 text-slate-700 space-y-2">
+                  <p><strong>1. Repository Clone:</strong> Devin clones your repository to analyze the code.</p>
+                  <p><strong>2. Pattern Matching:</strong> Searches for flag references using grep, ripgrep, or AST parsing.</p>
+                  <p><strong>3. Context Extraction:</strong> Captures surrounding code to understand usage patterns.</p>
+                  <p><strong>4. Risk Assessment:</strong> Evaluates complexity, test coverage, and dependency chains.</p>
+                  <p><strong>5. JSON Output:</strong> Structures findings as JSON which we parse and display as results.</p>
+                </div>
+              </details>
+            </div>
           </div>
         </Card>
       )}
