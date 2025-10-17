@@ -75,10 +75,8 @@ export default function JobPage() {
           setResult(data.result)
         }
 
-        // Update error
-        if (data.error) {
-          setError(data.error)
-        }
+        // Update error (clear if no error in response)
+        setError(data.error || null)
 
         // Check if completed or failed
         // Also detect completion if we have a PR URL (removal success) or analysis results
