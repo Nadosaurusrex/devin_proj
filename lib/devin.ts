@@ -360,7 +360,7 @@ export async function getSessionStatus(
       'cancelled': 'cancelled',
     }
 
-    const mappedStatus = statusMap[data.status_enum] || 'running'
+    let mappedStatus = statusMap[data.status_enum] || 'running'
 
     // Try to extract structured result - attempt this regardless of status
     let result: AnalysisResult | RemovalResult | undefined = data.structured_output
@@ -483,6 +483,15 @@ export async function getSessionStatus(
       console.warn('[Devin] Session completed but no result could be extracted')
       console.warn('[Devin] Attachments:', data.attachments?.length || 0)
       console.warn('[Devin] Output length:', output.length)
+    }
+
+    // Heuristic: If we have a result and output contains "Session terminated", mark as completed
+    // This handles cases where Devin finishes but status_enum isn't updated
+    if (result && mappedStatus === 'running') {
+      if (output.includes('Session terminated') || output.includes('Analysis complete')) {
+        console.log('[Devin] Detected completion via output markers, updating status to completed')
+        mappedStatus = 'completed'
+      }
     }
 
     return {
