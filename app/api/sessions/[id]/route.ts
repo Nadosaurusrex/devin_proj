@@ -21,14 +21,23 @@ export async function GET(
     // Get session status directly from Devin API
     const sessionStatus = await getSessionStatus(sessionId)
 
-    // Return Devin session data
-    return NextResponse.json({
-      sessionId,
-      status: sessionStatus.status,
-      output: sessionStatus.output,
-      result: sessionStatus.result,
-      error: sessionStatus.error,
-    })
+    // Return Devin session data with explicit no-cache headers
+    return NextResponse.json(
+      {
+        sessionId,
+        status: sessionStatus.status,
+        output: sessionStatus.output,
+        result: sessionStatus.result,
+        error: sessionStatus.error,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    )
 
   } catch (error) {
     const errorResponse: ErrorResponse = {

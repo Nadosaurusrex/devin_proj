@@ -303,6 +303,7 @@ export async function getSessionStatus(
         Authorization: `Bearer ${DEVIN_API_KEY}`,
       },
       signal: controller.signal,
+      cache: 'no-store', // Prevent Next.js from caching Devin API responses
     })
 
     clearTimeout(timeoutId)
