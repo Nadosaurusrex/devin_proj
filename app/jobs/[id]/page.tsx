@@ -9,7 +9,7 @@ import { Divider } from 'primereact/divider'
 import { ProgressBar } from 'primereact/progressbar'
 import { Badge } from 'primereact/badge'
 import { motion } from 'framer-motion'
-import type { LogEntry, JobStatus, SSEMessage } from '@/types/jobs'
+import type { LogEntry, JobStatus } from '@/types/jobs'
 import type { AnalysisResult, RemovalResult } from '@/types/devin'
 
 export default function JobPage() {
@@ -22,53 +22,101 @@ export default function JobPage() {
   const [error, setError] = useState<string | null>(null)
   const [isComplete, setIsComplete] = useState(false)
   const logsEndRef = useRef<HTMLDivElement>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastDevinOutputLengthRef = useRef<number>(0)
 
   // Auto-scroll to bottom
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
 
-  // Connect to SSE stream
+  // Client-side polling (Vercel-compatible)
   useEffect(() => {
-    const streamUrl = `/api/jobs/${jobId}/stream`
-    const eventSource = new EventSource(streamUrl)
-    eventSourceRef.current = eventSource
+    let isMounted = true
 
-    eventSource.onmessage = (event) => {
+    const pollJobStatus = async () => {
       try {
-        const message: SSEMessage = JSON.parse(event.data)
+        const response = await fetch(`/api/jobs/${jobId}`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch job status: ${response.statusText}`)
+        }
 
-        switch (message.type) {
-          case 'log':
-            setLogs((prev) => [...prev, message.data as LogEntry])
-            break
-          case 'status':
-            setStatus((message.data as { status: JobStatus }).status)
-            break
-          case 'result':
-            setResult(message.data as AnalysisResult | RemovalResult)
-            break
-          case 'error':
-            setError((message.data as { error: string }).error)
-            break
-          case 'complete':
-            setIsComplete(true)
-            eventSource.close()
-            break
+        const data = await response.json()
+
+        if (!isMounted) return
+
+        // Update status
+        setStatus(data.status)
+
+        // Update logs from job storage
+        if (data.logs && Array.isArray(data.logs)) {
+          setLogs(data.logs)
+        }
+
+        // Parse Devin output for new logs
+        if (data.devinOutput && typeof data.devinOutput === 'string') {
+          // Only process new output since last check
+          if (data.devinOutput.length > lastDevinOutputLengthRef.current) {
+            const newOutput = data.devinOutput.substring(lastDevinOutputLengthRef.current)
+            const outputLines = newOutput.split('\n')
+
+            const newLogs: LogEntry[] = []
+            for (const line of outputLines) {
+              if (line.trim()) {
+                newLogs.push({
+                  timestamp: new Date().toISOString(),
+                  level: 'info',
+                  message: line,
+                })
+              }
+            }
+
+            if (newLogs.length > 0) {
+              setLogs((prev) => [...prev, ...newLogs])
+            }
+
+            lastDevinOutputLengthRef.current = data.devinOutput.length
+          }
+        }
+
+        // Update result
+        if (data.result) {
+          setResult(data.result)
+        }
+
+        // Update error
+        if (data.error) {
+          setError(data.error)
+        }
+
+        // Check if completed or failed
+        if (data.status === 'completed' || data.status === 'failed') {
+          setIsComplete(true)
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
+          }
         }
       } catch (err) {
-        console.error('Failed to parse SSE message:', err)
+        console.error('Failed to poll job status:', err)
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch job status')
+        }
       }
     }
 
-    eventSource.onerror = (err) => {
-      console.error('SSE connection error:', err)
-      eventSource.close()
-    }
+    // Initial poll
+    pollJobStatus()
+
+    // Poll every 1 second (client-side, not serverless)
+    pollIntervalRef.current = setInterval(pollJobStatus, 1000)
 
     return () => {
-      eventSource.close()
+      isMounted = false
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
     }
   }, [jobId])
 
