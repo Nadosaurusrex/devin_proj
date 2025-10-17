@@ -1,14 +1,4 @@
 flags:
-  - key: new_dashboard
-    state: enabled
-    description: New dashboard UI with improved analytics
-    lastModified: '2025-01-15T10:30:00Z'
-    createdAt: '2024-12-01T08:00:00Z'
-    tags:
-      - ui
-      - dashboard
-    owner: frontend-team
-
   - key: legacy_api
     state: deprecated
     description: Old API endpoint - to be removed in Q2 2025
