@@ -23,7 +23,7 @@ export default function JobPage() {
   const [isComplete, setIsComplete] = useState(false)
   const logsEndRef = useRef<HTMLDivElement>(null)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const lastOutputLengthRef = useRef<number>(0)
+  const lastLogCountRef = useRef<number>(0)
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -48,29 +48,25 @@ export default function JobPage() {
         // Update status
         setStatus(data.status || 'running')
 
-        // Parse Devin output for logs (incremental)
+        // Parse Devin output for logs (full re-parse each time - simpler and more reliable)
         if (data.output && typeof data.output === 'string') {
-          // Only process new output since last check
-          if (data.output.length > lastOutputLengthRef.current) {
-            const newOutput = data.output.substring(lastOutputLengthRef.current)
-            const outputLines = newOutput.split('\n')
+          const outputLines = data.output.split('\n')
+          const parsedLogs: LogEntry[] = []
 
-            const newLogs: LogEntry[] = []
-            for (const line of outputLines) {
-              if (line.trim()) {
-                newLogs.push({
-                  timestamp: new Date().toISOString(),
-                  level: 'info',
-                  message: line,
-                })
-              }
+          for (const line of outputLines) {
+            if (line.trim()) {
+              parsedLogs.push({
+                timestamp: new Date().toISOString(),
+                level: 'info',
+                message: line,
+              })
             }
+          }
 
-            if (newLogs.length > 0) {
-              setLogs((prev) => [...prev, ...newLogs])
-            }
-
-            lastOutputLengthRef.current = data.output.length
+          // Only update if the log count changed (avoid unnecessary re-renders)
+          if (parsedLogs.length !== lastLogCountRef.current) {
+            setLogs(parsedLogs)
+            lastLogCountRef.current = parsedLogs.length
           }
         }
 
