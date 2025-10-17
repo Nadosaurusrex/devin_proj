@@ -342,6 +342,14 @@ export async function getSessionStatus(
 
     console.log(`[Devin ${sessionId}] Extracted ${relevantMessages.length} messages, output length: ${output.length}`)
 
+    // Get only Devin's responses (not user messages) for result extraction
+    const devinResponses = messages.filter((m: { type: string }) =>
+      m.type === 'devin_message' || m.type === 'system_message' || m.type === 'tool_result'
+    )
+    const devinOutput = devinResponses
+      .map((m: { message: string }) => m.message || '')
+      .join('\n')
+
     // Map Devin's status_enum to our status type
     const statusMap: Record<string, DevinSessionStatus> = {
       'running': 'running',
@@ -376,12 +384,12 @@ export async function getSessionStatus(
       }
     }
 
-    // If still no result, try to extract JSON from the output text
-    // Try this even if status is still 'running' in case result comes early
-    if (!result && output) {
+    // If still no result, try to extract JSON from Devin's responses only
+    // IMPORTANT: Use devinOutput (excludes user/initial messages) to avoid parsing example JSON from prompt
+    if (!result && devinOutput) {
       try {
         // Method 1: Look for JSON in code blocks (```json ... ```)
-        const jsonMatch = output.match(/```json\s*([\s\S]*?)\s*```/)
+        const jsonMatch = devinOutput.match(/```json\s*([\s\S]*?)\s*```/)
         if (jsonMatch) {
           console.log('[Devin] Found JSON in code block, attempting to parse...')
           result = JSON.parse(jsonMatch[1])
@@ -394,22 +402,22 @@ export async function getSessionStatus(
       // Method 2: Try to find JSON object with "flags" key (analysis result)
       if (!result) {
         try {
-          const flagsMatch = output.match(/\{[\s\S]*?"flags"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/)
+          const flagsMatch = devinOutput.match(/\{[\s\S]*?"flags"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/)
           if (flagsMatch) {
             console.log('[Devin] Found potential analysis result JSON, attempting to parse...')
             // Try to find the complete JSON object by balancing braces
             const startIdx = flagsMatch.index || 0
             let braceCount = 0
             let jsonEnd = startIdx
-            for (let i = startIdx; i < output.length; i++) {
-              if (output[i] === '{') braceCount++
-              if (output[i] === '}') braceCount--
-              if (braceCount === 0 && output[i] === '}') {
+            for (let i = startIdx; i < devinOutput.length; i++) {
+              if (devinOutput[i] === '{') braceCount++
+              if (devinOutput[i] === '}') braceCount--
+              if (braceCount === 0 && devinOutput[i] === '}') {
                 jsonEnd = i + 1
                 break
               }
             }
-            const jsonStr = output.substring(startIdx, jsonEnd)
+            const jsonStr = devinOutput.substring(startIdx, jsonEnd)
             result = JSON.parse(jsonStr)
             console.log('[Devin] Successfully parsed analysis result from text')
           }
@@ -421,22 +429,22 @@ export async function getSessionStatus(
       // Method 3: Try to find JSON object with "summary" key (removal result)
       if (!result) {
         try {
-          const summaryMatch = output.match(/\{[\s\S]*?"summary"\s*:\s*\{[\s\S]*?"flags_removed"[\s\S]*?\}/)
+          const summaryMatch = devinOutput.match(/\{[\s\S]*?"summary"\s*:\s*\{[\s\S]*?"flags_removed"[\s\S]*?\}/)
           if (summaryMatch) {
             console.log('[Devin] Found potential removal result JSON, attempting to parse...')
             // Try to find the complete JSON object by balancing braces
             const startIdx = summaryMatch.index || 0
             let braceCount = 0
             let jsonEnd = startIdx
-            for (let i = startIdx; i < output.length; i++) {
-              if (output[i] === '{') braceCount++
-              if (output[i] === '}') braceCount--
-              if (braceCount === 0 && output[i] === '}') {
+            for (let i = startIdx; i < devinOutput.length; i++) {
+              if (devinOutput[i] === '{') braceCount++
+              if (devinOutput[i] === '}') braceCount--
+              if (braceCount === 0 && devinOutput[i] === '}') {
                 jsonEnd = i + 1
                 break
               }
             }
-            const jsonStr = output.substring(startIdx, jsonEnd)
+            const jsonStr = devinOutput.substring(startIdx, jsonEnd)
             result = JSON.parse(jsonStr)
             console.log('[Devin] Successfully parsed removal result from text')
           }
