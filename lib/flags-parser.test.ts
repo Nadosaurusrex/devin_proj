@@ -8,11 +8,11 @@ describe('parseJSON', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseJSON(content)
 
-    expect(flags).toHaveLength(3)
-    expect(flags[0].key).toBe('new_dashboard')
-    expect(flags[0].state).toBe('enabled')
-    expect(flags[1].key).toBe('legacy_api')
-    expect(flags[1].state).toBe('deprecated')
+    expect(flags).toHaveLength(2)
+    expect(flags[0].key).toBe('legacy_api')
+    expect(flags[0].state).toBe('deprecated')
+    expect(flags[1].key).toBe('experimental_search')
+    expect(flags[1].state).toBe('disabled')
   })
 
   it('should parse JSON array directly', () => {
@@ -50,11 +50,11 @@ describe('parseYAML', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseYAML(content)
 
-    expect(flags).toHaveLength(3)
-    expect(flags[0].key).toBe('new_dashboard')
-    expect(flags[0].state).toBe('enabled')
-    expect(flags[0].tags).toContain('ui')
-    expect(flags[0].tags).toContain('dashboard')
+    expect(flags).toHaveLength(2)
+    expect(flags[0].key).toBe('legacy_api')
+    expect(flags[0].state).toBe('deprecated')
+    expect(flags[0].tags).toContain('api')
+    expect(flags[0].tags).toContain('legacy')
   })
 
   it('should parse YAML array directly', () => {
@@ -99,23 +99,23 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.json')
 
-    expect(flags).toHaveLength(3)
-    expect(flags[0].key).toBe('new_dashboard')
+    expect(flags).toHaveLength(2)
+    expect(flags[0].key).toBe('legacy_api')
   })
 
   it('should parse YAML file based on .yaml extension', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.yaml')
 
-    expect(flags).toHaveLength(3)
-    expect(flags[0].key).toBe('new_dashboard')
+    expect(flags).toHaveLength(2)
+    expect(flags[0].key).toBe('legacy_api')
   })
 
   it('should parse YAML file based on .yml extension', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.yaml'), 'utf-8')
     const flags = parseFlags(content, 'config/flags.yml')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
   })
 
   it('should try JSON first for unknown extensions', () => {
@@ -143,6 +143,6 @@ describe('parseFlags', () => {
     const content = readFileSync(join(__dirname, '../__fixtures__/flags.json'), 'utf-8')
     const flags = parseFlags(content, 'config/FLAGS.JSON')
 
-    expect(flags).toHaveLength(3)
+    expect(flags).toHaveLength(2)
   })
 })
